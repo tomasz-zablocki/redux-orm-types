@@ -1,0 +1,24 @@
+{
+  "name": "redux-orm-typings",
+  "version": "0.13.3",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^12.0.2",
+    "prettier": "^1.17.1",
+    "redux": "^4.0.1",
+    "redux-orm": "^0.13.3",
+    "ts-node": "^8.1.0",
+    "tslib": "^1.9.3",
+    "typescript": "^3.4.5"
+  },
+  "types": "typings",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tomasz-zablocki/redux-orm-typings.git"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "tsc -p ./tsconfig.test.json",
+    "run": "ts-node test/index.ts"
+  }
+}
