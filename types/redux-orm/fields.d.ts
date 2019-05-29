@@ -73,7 +73,7 @@ export class ManyToMany extends RelationalField {
 export class OneToOne extends RelationalField {
 }
 
-export function attr<T extends AttributeOpts>(opts?: T): {} extends T ? Attribute : AttributeWithDefault
+export function attr<T extends AttributeOpts>(opts?: T): {} extends T ? Attribute : AttributeWithDefault;
 
 export function fk(toModelName: string, relatedName?: string): ForeignKey;
 export function fk(opts: RelationalFieldOpts): ForeignKey;
@@ -84,6 +84,6 @@ export function many(opts: RelationalFieldOpts): ManyToMany;
 export function oneToOne(toModelName: string, relatedName?: string): OneToOne;
 export function oneToOne(opts: RelationalFieldOpts): OneToOne;
 
-interface AttributeWithDefault extends Attribute {
-    getDefault(): Serializable
+export interface AttributeWithDefault extends Attribute {
+    getDefault(): Serializable;
 }

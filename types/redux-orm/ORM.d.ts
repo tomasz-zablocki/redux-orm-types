@@ -13,13 +13,13 @@ export type TableState<MClass extends typeof AnyModel,
     Meta extends object = { maxId: MIdType extends number ? number : null }> = Record<ArrName, ReadonlyArray<MIdType>> &
                                                                                Record<MapName, { readonly [K: string]: Ref<InstanceType<MClass>> }>
                                                                                & {
-        meta: Meta;
+                                                                                   meta: Meta;
                                                                                    indexes: object;
-    };
+                                                                               };
 
-export type Schema = (typeof AnyModel)[];
+export type Schema = Array<typeof AnyModel>;
 
-export type ModelUnion<TSchema extends Schema> = TSchema extends (infer U)[]
+export type ModelUnion<TSchema extends Schema> = TSchema extends Array<infer U>
                                                  ? U extends typeof AnyModel
                                                    ? { [K in U['modelName']]: InstanceType<U> }
                                                    : never

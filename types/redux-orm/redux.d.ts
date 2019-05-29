@@ -1,6 +1,6 @@
 import { ModelClassMap, ORM, OrmState, Schema } from './ORM';
 import { SessionWithModels } from './Session';
-import { AnyModel } from 'redux-orm/Model';
+import { AnyModel } from './Model';
 
 export interface ORMReducer<TModelTypes extends Schema = [],
     TAction extends any = any,

@@ -63,7 +63,7 @@ export interface DB<T extends Schema,
         tx: Transaction,
         state: OrmState<MClassMap>
     ): UpdateResult<MClassMap>;
-    describe<K extends keyof Tables>(): Tables[K];
+    describe<K extends keyof Tables>(k: K): Tables[K];
 }
 
 export type DBCreator = typeof createDatabase;

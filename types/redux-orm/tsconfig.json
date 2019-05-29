@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "lib": [
+      "es6"
+    ],
+    "target": "es6",
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "baseUrl": "../",
+    "typeRoots": [
+      "../"
+    ],
+    "types": [],
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "files": [
+    "index.d.ts",
+    "redux-orm-tests.ts",
+    "fields.d.ts",
+    "db/Database.d.ts",
+    "db/Table.d.ts",
+    "redux.d.ts",
+    "db/index.d.ts",
+    "ORM.d.ts",
+    "QuerySet.d.ts",
+    "Model.d.ts",
+    "Session.d.ts"
+  ]
+}

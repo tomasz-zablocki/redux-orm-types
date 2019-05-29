@@ -1,9 +1,9 @@
 import { ModelClassMap, ORM, OrmState, Schema } from './ORM';
 import { DB, QueryResult, QuerySpec } from './db';
-import { AnyModel, ModelType } from 'redux-orm/Model';
+import { AnyModel, ModelType } from './Model';
 
 export default class Session<T extends Schema = [], MTypes extends ModelClassMap<T> = ModelClassMap<T>> {
-    readonly accessedModels: (keyof MTypes)[];
+    readonly accessedModels: Array<keyof MTypes>;
     schema: ORM<T>;
     db: DB<T>;
     initialState: OrmState<MTypes>;
