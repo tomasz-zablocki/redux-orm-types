@@ -1,5 +1,4 @@
-import { attr, createSelector as createSelectorORM, fk, many, Model, MutableQuerySet, ORM, OrmState, QuerySet, SessionBoundModel, SessionWithModels } from 'redux-orm';
-import { ModelType } from 'redux-orm/Model';
+import { attr, createSelector as createSelectorORM, fk, many, Model, ModelType, MutableQuerySet, ORM, OrmState, QuerySet, SessionBoundModel, SessionWithModels } from 'redux-orm';
 
 // core data which we do not have defaults for
 interface TestStateItem {

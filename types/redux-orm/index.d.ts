@@ -5,7 +5,7 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 3.4
 
-import { ORM, ORMOpts, OrmState } from './ORM';
+import { ORM, ORMOpts, OrmState, TableState } from './ORM';
 import Model from './Model';
 import QuerySet from './QuerySet';
 import Session, { SessionWithModels } from './Session';
@@ -21,9 +21,8 @@ export {
     many
 } from './fields';
 export { SortIteratee, SortOrder, MutableQuerySet } from './QuerySet';
-export { TableState } from './ORM';
+export {} from './ORM';
 export { createSelector, createReducer } from './redux';
-export { ORM, OrmState, ORMOpts, Session, SessionWithModels, Model, QuerySet };
-export { Ref, SessionBoundModel, IdKey, IdType } from './Model';
+export { ORM, OrmState, ORMOpts, Session, TableState, SessionWithModels, Model, QuerySet };
+export { IdOrModelLike, Ref, SessionBoundModel, IdKey, IdType, ModelType } from './Model';
 export default Model;
-export { IdOrModelLike } from './Model';
