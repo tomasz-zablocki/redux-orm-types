@@ -18,6 +18,7 @@ export default class Session<T extends Schema = [], MTypes extends ModelClassMap
     query(querySpec: QuerySpec): QueryResult;
 }
 
-export type SessionWithModels<T extends Schema,
-    MClassMap extends Record<string, typeof AnyModel> = ModelClassMap<T>> = Session<T>
-                                                                            & { [K in keyof MClassMap]: ModelType<InstanceType<MClassMap[K]>> };
+export type SessionWithModels<
+    T extends Schema,
+    MClassMap extends Record<string, typeof AnyModel> = ModelClassMap<T>
+> = Session<T> & { [K in keyof MClassMap]: ModelType<InstanceType<MClassMap[K]>> };

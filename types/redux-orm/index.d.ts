@@ -10,16 +10,7 @@ import Model from './Model';
 import QuerySet from './QuerySet';
 import Session, { SessionWithModels } from './Session';
 
-export {
-    Attribute,
-    OneToOne,
-    ForeignKey,
-    ManyToMany,
-    attr,
-    oneToOne,
-    fk,
-    many
-} from './fields';
+export { Attribute, OneToOne, ForeignKey, ManyToMany, attr, oneToOne, fk, many } from './fields';
 export { SortIteratee, SortOrder, MutableQuerySet } from './QuerySet';
 export {} from './ORM';
 export { createSelector, createReducer } from './redux';

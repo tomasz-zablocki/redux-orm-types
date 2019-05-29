@@ -2,9 +2,11 @@ import { ModelClassMap, ORM, OrmState, Schema } from './ORM';
 import { SessionWithModels } from './Session';
 import { AnyModel } from './Model';
 
-export interface ORMReducer<TModelTypes extends Schema = [],
+export interface ORMReducer<
+    TModelTypes extends Schema = [],
     TAction extends any = any,
-    MClassMap extends Record<keyof MClassMap, typeof AnyModel> = ModelClassMap<TModelTypes>> {
+    MClassMap extends Record<keyof MClassMap, typeof AnyModel> = ModelClassMap<TModelTypes>
+> {
     (state: OrmState<TModelTypes> | undefined, action: TAction): OrmState<TModelTypes>;
 }
 

@@ -1,4 +1,17 @@
-import { attr, createSelector as createSelectorORM, fk, many, Model, ModelType, MutableQuerySet, ORM, OrmState, QuerySet, SessionBoundModel, SessionWithModels } from 'redux-orm';
+import {
+    attr,
+    createSelector as createSelectorORM,
+    fk,
+    many,
+    Model,
+    ModelType,
+    MutableQuerySet,
+    ORM,
+    OrmState,
+    QuerySet,
+    SessionBoundModel,
+    SessionWithModels
+} from 'redux-orm';
 
 // core data which we do not have defaults for
 interface TestStateItem {
@@ -11,9 +24,9 @@ interface TestStateItem {
 class Test extends Model<typeof Test, TestStateItem> {
     static modelName = 'Test' as const;
     static fields = {
-        test:       attr(),
+        test: attr(),
         isFetching: attr({ getDefault: () => false }),
-        id:         attr()
+        id: attr()
     };
 }
 
@@ -61,12 +74,13 @@ interface RootState {
     test: TestORMState;
 }
 
-class TestQuerySet extends QuerySet<Test> {
-}
+class TestQuerySet extends QuerySet<Test> {}
 
 const makeGetTestDisplayList = () => {
     const ormSelector = createSelectorORM<TestORMModels>(orm2, (session: TestSession) =>
-        session.Test.all().toRefArray().map(item => ({ ...item }))
+        session.Test.all()
+            .toRefArray()
+            .map(item => ({ ...item }))
     );
     return createSelector<RootState, TestORMState, TestDisplayItemList>(
         ({ test }) => test,
@@ -121,15 +135,15 @@ type BookAction = CreateBookAction | DeleteBookAction;
 interface BookModelFields {
     title: string;
     authors?: MutableQuerySet<Person>;
-    author: SessionBoundModel<Person>;
+    author: Person;
 }
 
 class Book extends Model<typeof Book, BookModelFields> {
     static modelName = 'Book' as const;
     static fields = {
-        title:   attr({ getDefault: () => 'asd' }),
+        title: attr({ getDefault: () => 'asd' }),
         authors: many({ to: 'Person', relatedName: 'books', through: 'Authorship' }),
-        author:  fk({ to: 'Person', relatedName: 'book' })
+        author: fk({ to: 'Person', relatedName: 'book' })
     };
     static options = {
         idAttribute: 'title' as const
@@ -176,14 +190,14 @@ interface CreatePersonAction {
 class Person extends Model<typeof Person, PersonModelFields> {
     static modelName = 'Person' as const;
     static fields = {
-        id:        attr(),
+        id: attr(),
         firstName: attr(),
-        lastName:  attr({ getDefault: () => 'asd' })
+        lastName: attr({ getDefault: () => 'asd' })
     };
     static reducer(
         action: CreateBookAction | CreatePersonAction,
         Person: ModelType<Person>,
-        session: SessionWithModels<[typeof Book, typeof Authorship]>
+        session: SessionWithModels<[typeof Book, typeof Authorship, any]>
     ) {
         switch (action.type) {
             case 'CREATE_PERSON':
@@ -205,16 +219,16 @@ class Person extends Model<typeof Person, PersonModelFields> {
 interface AuthorshipFields {
     id: number;
     year?: number;
-    book: SessionBoundModel<Book>;
-    author: SessionBoundModel<Person>;
+    book: Book;
+    author: Person;
 }
 
 class Authorship extends Model<typeof Authorship, AuthorshipFields> {
     static modelName = 'Authorship' as const;
     static fields = {
-        id:     attr(),
-        year:   attr(),
-        book:   fk('Book'),
+        id: attr(),
+        year: attr(),
+        book: fk('Book'),
         author: fk('Person')
     };
 }
@@ -226,4 +240,9 @@ const orm = new ORM<OrmModels>();
 orm.register(Book, Authorship, Person);
 
 const session = orm.session(orm.getEmptyState());
-session.Book.create({ title: 'T1', author: session.Person.create({ id: 4, firstName: 'a', lastName: 'v' }), foo: true });
+
+const b = session.Book.create({
+    title: 'T1',
+    author: session.Person.create({ id: 4, firstName: 'a', lastName: 'v' }),
+    foo: true
+});

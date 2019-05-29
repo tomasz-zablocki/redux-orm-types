@@ -52,9 +52,11 @@ export interface SchemaSpec<T extends Schema> {
     tables: { [K in keyof ModelClassMap<T>]: TableSpec<ModelClassMap<T>> };
 }
 
-export interface DB<T extends Schema,
+export interface DB<
+    T extends Schema,
     MClassMap extends ModelClassMap<T> = ModelClassMap<T>,
-    Tables = { [K in keyof MClassMap]: Table<MClassMap[K]> }> {
+    Tables = { [K in keyof MClassMap]: Table<MClassMap[K]> }
+> {
     getEmptyState(): OrmState<MClassMap>;
     query(tables: Tables, querySpec: QuerySpec, state: OrmState<MClassMap>): QueryResult;
     update(
@@ -68,8 +70,6 @@ export interface DB<T extends Schema,
 
 export type DBCreator = typeof createDatabase;
 
-export function createDatabase<T extends Schema>(
-    schemaSpec: SchemaSpec<T>
-): DB<T>;
+export function createDatabase<T extends Schema>(schemaSpec: SchemaSpec<T>): DB<T>;
 
 export default createDatabase;

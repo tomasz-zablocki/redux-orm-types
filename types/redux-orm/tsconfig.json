@@ -20,14 +20,15 @@
   "files": [
     "index.d.ts",
     "redux-orm-tests.ts",
-    "fields.d.ts",
+    "helpers.d.ts",
+    "db/index.d.ts",
     "db/Database.d.ts",
     "db/Table.d.ts",
     "redux.d.ts",
-    "db/index.d.ts",
+    "fields.d.ts",
     "ORM.d.ts",
-    "QuerySet.d.ts",
     "Model.d.ts",
+    "QuerySet.d.ts",
     "Session.d.ts"
   ]
 }

@@ -1,26 +1,7 @@
 import Model, { IdOrModelLike, Serializable } from './Model';
-import { ORM } from './ORM';
 
-export interface FieldInstallerOpts {
-    field: Field;
-    fieldName: string;
-    model: typeof Model;
-    orm: ORM;
-}
-
-export class FieldInstallerTemplate {
-    readonly backwardsFieldName: string;
-    readonly toModel: typeof Model;
-    readonly throughModel: typeof Model;
-    constructor(opts: FieldInstallerOpts);
+export interface FieldInstaller {
     run(): void;
-}
-
-export class DefaultFieldInstaller extends FieldInstallerTemplate {
-    installBackwardsDescriptor(): void;
-    installBackwardsVirtualField(): void;
-    installForwardsDescriptor(): void;
-    installForwardsVirtualField(): void;
 }
 
 export class Field {
@@ -28,13 +9,21 @@ export class Field {
     readonly installsForwardsVirtualField: boolean;
     readonly installsBackwardsDescriptor: boolean;
     readonly installsBackwardsVirtualField: boolean;
-    readonly installerClass: typeof DefaultFieldInstaller;
+    readonly installerClass: { new (): FieldInstaller };
     index: boolean;
+
     getClass(): typeof Field;
+
     references(model: typeof Model): boolean;
+
     getThroughModelName(fieldName: string, model: typeof Model): string;
-    createForwardsDescriptor(fieldName: string, model?: typeof Model, toModel?: typeof Model,
-                             throughModel?: typeof Model): PropertyDescriptor;
+
+    createForwardsDescriptor(
+        fieldName: string,
+        model?: typeof Model,
+        toModel?: typeof Model,
+        throughModel?: typeof Model
+    ): PropertyDescriptor;
 }
 
 export interface AttributeOpts {
@@ -42,7 +31,7 @@ export interface AttributeOpts {
 }
 
 export class Attribute extends Field {
-    constructor(opts?: AttributeOpts)
+    constructor(opts?: AttributeOpts);
 }
 
 export interface RelationalFieldOpts {
@@ -59,19 +48,22 @@ export interface RelationalFieldOpts {
 export class RelationalField extends Field {
     constructor(toModelName: string, relatedName?: string);
     constructor(opts: RelationalFieldOpts);
-    createBackwardsDescriptor(fieldName: string, model?: typeof Model, toModel?: typeof Model,
-                              throughModel?: typeof Model): PropertyDescriptor;
+
+    createBackwardsDescriptor(
+        fieldName: string,
+        model?: typeof Model,
+        toModel?: typeof Model,
+        throughModel?: typeof Model
+    ): PropertyDescriptor;
 }
 
-export class ForeignKey extends RelationalField {
-}
+export class ForeignKey extends RelationalField {}
 
 export class ManyToMany extends RelationalField {
     getDefault(): ReadonlyArray<IdOrModelLike<any>>;
 }
 
-export class OneToOne extends RelationalField {
-}
+export class OneToOne extends RelationalField {}
 
 export function attr<T extends AttributeOpts>(opts?: T): {} extends T ? Attribute : AttributeWithDefault;
 
@@ -86,4 +78,16 @@ export function oneToOne(opts: RelationalFieldOpts): OneToOne;
 
 export interface AttributeWithDefault extends Attribute {
     getDefault(): Serializable;
+}
+
+export type FieldDescriptor = Attribute | ForeignKey | ManyToMany | OneToOne;
+
+export type VirtualFieldDescriptor = ForeignKey | ManyToMany | OneToOne;
+
+export interface FieldDescriptorMap {
+    [K: string]: FieldDescriptor;
+}
+
+export interface VirtualFieldDescriptorMap {
+    [K: string]: VirtualFieldDescriptor;
 }
