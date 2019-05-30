@@ -1,29 +1,25 @@
-import { ModelClassMap, ORM, OrmState, SessionType } from './ORM';
-import { AnyModel } from './Model';
+import { ORM, OrmState, SessionType } from './ORM';
+import { IndexedModelClasses } from './helpers';
 
-export interface ORMReducer<
-    TModelTypes extends Array<typeof AnyModel> = [],
-    TAction extends any = any,
-    MClassMap extends Record<keyof MClassMap, typeof AnyModel> = ModelClassMap<TModelTypes>
-> {
-    (state: OrmState<TModelTypes> | undefined, action: TAction): OrmState<TModelTypes>;
+export interface ORMReducer<I extends IndexedModelClasses<any>, TAction extends any = any> {
+    (state: OrmState<I> | undefined, action: TAction): OrmState<I>;
 }
 
-export type defaultUpdater<TModelTypes extends Array<typeof AnyModel> = [], TAction extends any = any> = (
-    session: SessionType<TModelTypes>,
+export type defaultUpdater<I extends IndexedModelClasses<any>, TAction extends any = any> = (
+    session: SessionType<I>,
     action: TAction
 ) => void;
 
-export function createReducer<TModelTypes extends Array<typeof AnyModel> = [], TAction extends any = any>(
-    orm: ORM<TModelTypes>,
-    updater?: defaultUpdater<TModelTypes, TAction>
-): ORMReducer<TModelTypes, TAction>;
+export function createReducer<I extends IndexedModelClasses<any>, TAction extends any = any>(
+    orm: ORM<I>,
+    updater?: defaultUpdater<I, TAction>
+): ORMReducer<I, TAction>;
 
-export interface ORMSelector<T extends Array<typeof AnyModel> = [], Result = any> {
-    (session: SessionType<T>, ...args: any[]): Result;
+export interface ORMSelector<I extends IndexedModelClasses<any>, Result = any> {
+    (session: SessionType<I>, ...args: any[]): Result;
 }
 
-export function createSelector<TModelTypes extends Array<typeof AnyModel> = []>(
-    orm: ORM<TModelTypes>,
-    ...args: ReadonlyArray<ORMSelector<TModelTypes>>
-): (state: OrmState<TModelTypes>) => any;
+export function createSelector<I extends IndexedModelClasses<any>, Result>(
+    orm: ORM<I>,
+    ormSelector: ORMSelector<I, Result>
+): (state: OrmState<I>) => Result;

@@ -1,4 +1,3 @@
-import Model from './Model';
 import { Serializable } from './helpers';
 
 export class Field {
@@ -31,7 +30,6 @@ export interface RelationalFieldOpts {
 export class RelationalField extends Field {
     constructor(toModelName: string, relatedName?: string);
     constructor(opts: RelationalFieldOpts);
-    getBackwardsFieldName(model: typeof Model): string;
 }
 
 export class OneToOne extends RelationalField {}

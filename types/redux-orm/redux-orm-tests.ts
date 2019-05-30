@@ -1,127 +1,20 @@
 import {
-    attr,
     createSelector as createSelectorORM,
+    attr,
     fk,
     many,
     Model,
     ModelType,
     MutableQuerySet,
     ORM,
-    OrmState,
     QuerySet,
+    Ref,
     SessionType
 } from 'redux-orm';
 
-// core data which we do not have defaults for
-interface TestStateItem {
-    test: string;
-    id: string;
-    isFetching: boolean;
-}
-
-// Model
-class Test extends Model<typeof Test, TestStateItem> {
-    static modelName = 'Test' as const;
-    static fields = {
-        test: attr(),
-        isFetching: attr({ getDefault: () => false }),
-        id: attr()
-    };
-}
-
-type TestORMModels = [typeof Test];
-
-type TestORMState = OrmState<TestORMModels>;
-
-type TestSession = SessionType<TestORMModels>;
-
-const orm2 = new ORM<TestORMModels>();
-
-orm2.register(Test);
-
-// Reducer
-interface TestDTO {
-    id: string;
-    test: string;
-}
-
-interface Action<P> {
-    type: string;
-    payload: P;
-}
-
-const reducerAddItem = (state: TestORMState, action: Action<TestDTO>): TestORMState => {
-    const session = orm2.session(state);
-    session.Test.upsert(action.payload);
-    return session.state;
-};
-
-// Selector
-interface TestDisplayItem {
-    test: string;
-}
-
-type TestDisplayItemList = TestDisplayItem[];
-
-// Just for the example below. Use real createSelector from reselect in your app
-const createSelector = <S, P1, R>(
-    param1Creator: (state: S) => P1,
-    combiner: (param1: P1) => R
-): ((state: S) => R) => state => combiner(param1Creator(state));
-
-interface RootState {
-    test: TestORMState;
-}
-
-class TestQuerySet extends QuerySet<Test> {}
-
-const makeGetTestDisplayList = () => {
-    const ormSelector = createSelectorORM<TestORMModels>(orm2, (session: TestSession) =>
-        session.Test.all()
-            .toRefArray()
-            .map(item => ({ ...item }))
-    );
-    return createSelector<RootState, TestORMState, TestDisplayItemList>(
-        ({ test }) => test,
-        ormSelector
-    );
-};
-
-// 'orderBy' method API
-const makeGetTestDisplayOrderedList = () => {
-    const ormSelector = createSelectorORM<TestORMModels>(orm2, (session: TestSession) =>
-        (session.Test.all() as TestQuerySet)
-            .orderBy(['test'], ['asc'])
-            .orderBy(['test', 'isFetching'], ['desc', 'desc'])
-            .orderBy([testModel => testModel.test], ['desc'])
-            .orderBy(['test'])
-            .orderBy(['id', testModel => testModel.isFetching, 'test'], ['desc', 'asc', 'asc'])
-            .toRefArray()
-            .map(item => ({ ...item }))
-    );
-
-    return createSelector<RootState, TestORMState, TestDisplayItemList>(
-        ({ test }) => test,
-        ormSelector
-    );
-};
-
-// accessing query set rows using at(number)
-const mkeGetTestDisplayItemAtIndex = () => {
-    const ormSelector = createSelectorORM<TestORMModels>(
-        orm2,
-        (session: TestSession) => (session.Test.all() as TestQuerySet).at(1)!.ref
-    );
-
-    return createSelector<RootState, TestORMState, TestDisplayItem>(
-        ({ test }) => test,
-        ormSelector
-    );
-};
-
 interface CreateBookAction {
     type: 'CREATE_BOOK';
-    payload: { title: string; author: number; authors: number[] };
+    payload: { title: string; publisher: number; authors?: number[] };
 }
 
 interface DeleteBookAction {
@@ -129,12 +22,17 @@ interface DeleteBookAction {
     payload: { title: string };
 }
 
-type BookAction = CreateBookAction | DeleteBookAction;
+interface CreatePublisherAction {
+    type: 'CREATE_PUBLISHER';
+    payload: { id: number; firstName: string; lastName: string; books?: string[] };
+}
+
+type RootAction = CreateBookAction | DeleteBookAction | CreatePublisherAction;
 
 interface BookModelFields {
     title: string;
     authors?: MutableQuerySet<Person>;
-    author: Person;
+    publisher: Publisher;
 }
 
 class Book extends Model<typeof Book, BookModelFields> {
@@ -142,24 +40,21 @@ class Book extends Model<typeof Book, BookModelFields> {
     static fields = {
         title: attr({ getDefault: () => 'asd' }),
         authors: many({ to: 'Person', relatedName: 'books', through: 'Authorship' }),
-        author: fk({ to: 'Person', relatedName: 'book' })
+        publisher: fk('Publisher', 'books')
     };
     static options = {
         idAttribute: 'title' as const
     };
-
-    static reducer(action: BookAction | CreatePersonAction, Book: ModelType<Book>) {
+    static reducer(action: RootAction, Book: ModelType<Book>) {
         const bookIdNotExists = (id: string) => !Book.idExists(id);
 
         switch (action.type) {
             case 'CREATE_BOOK':
                 Book.create(action.payload);
                 break;
-            case 'CREATE_PERSON':
+            case 'CREATE_PUBLISHER':
                 const { books = [], id } = action.payload;
-                books
-                    .filter(bookIdNotExists)
-                    .forEach(bookTitle => Book.create({ title: bookTitle, author: id, authors: [id] }));
+                books.filter(bookIdNotExists).forEach(bookTitle => Book.create({ title: bookTitle, publisher: id }));
 
                 books.reduce((query, bookTitle) => query.exclude({ title: bookTitle }), Book.all()).delete();
                 break;
@@ -182,11 +77,6 @@ interface PersonModelFields {
     books?: MutableQuerySet<Book>;
 }
 
-interface CreatePersonAction {
-    type: 'CREATE_PERSON';
-    payload: { id: number; firstName: string; lastName: string; books?: string[] };
-}
-
 class Person extends Model<typeof Person, PersonModelFields> {
     static modelName = 'Person' as const;
     static fields = {
@@ -196,19 +86,23 @@ class Person extends Model<typeof Person, PersonModelFields> {
     };
 
     static reducer(
-        action: CreateBookAction | CreatePersonAction,
+        action: RootAction,
         Person: ModelType<Person>,
-        session: SessionType<[typeof Book, typeof Authorship, any]>
+        session: SessionType<{ Authorship: typeof Authorship }>
     ) {
         switch (action.type) {
-            case 'CREATE_PERSON':
+            case 'CREATE_PUBLISHER':
                 if (!Person.idExists(action.payload.id)) {
                     Person.create(action.payload);
                 }
                 break;
             case 'CREATE_BOOK':
-                if (!session.Authorship.filter({ author: action.payload.author }).exists()) {
-                    Person.upsert({ id: action.payload.author });
+                if (
+                    !session.Authorship.filter({
+                        author: action.payload.publisher
+                    }).exists()
+                ) {
+                    Person.upsert({ id: action.payload.publisher });
                 }
                 break;
             default:
@@ -234,15 +128,140 @@ class Authorship extends Model<typeof Authorship, AuthorshipFields> {
     };
 }
 
-type OrmModels = [typeof Book, typeof Authorship, typeof Person];
+interface PublisherFields {
+    id: number;
+    name: string;
+    books: QuerySet<Book>;
+}
 
-const orm = new ORM<OrmModels>();
+class Publisher extends Model<typeof Publisher, PublisherFields> {
+    static modelName = 'Publisher' as const;
+    static fields = {
+        id: attr(),
+        name: attr()
+    };
+}
 
-orm.register(Book, Authorship, Person);
+const validationOfRegisteredModelClasses = () => {
+    const incompleteSchema = { Book, Authorship, Person };
+    const orm = new ORM<typeof incompleteSchema>();
 
-const session = orm.session(orm.getEmptyState());
-const b = session.Book.create({
-    title: 'T1',
-    author: session.Person.create({ id: 4, firstName: 'a', lastName: 'v' }),
-    foo: true
-});
+    // $ExpectError
+    orm.register(Book, Authorship, Person, Publisher);
+};
+
+const registerOrmFixture = () => {
+    const schema = { Book, Authorship, Person, Publisher };
+    const orm = new ORM<typeof schema>();
+
+    orm.register(Book, Authorship, Person, Publisher);
+
+    return orm;
+};
+
+const modelTypesOnReturnedSession = () => {
+    const orm = registerOrmFixture();
+
+    const { Book, Person, Publisher } = orm.session(orm.getEmptyState());
+
+    // $ExpectType { Book: ModelType<Book>; Person: ModelType<Person>; Publisher: ModelType<Publisher>; }
+    const sessionBoundModels = { Book, Person, Publisher };
+};
+
+const ormBranchEmptyState = () => {
+    const orm = registerOrmFixture();
+
+    const emptyState = orm.getEmptyState();
+
+    // $ExpectType TableState<Book, "items", "itemsById", { maxId: null; }>
+    const bookTableState = emptyState.Book;
+
+    // $ExpectType { readonly [K: string]: Ref<Book>; }
+    const bookItemsById = emptyState.Book.itemsById;
+
+    // $ExpectType { maxId: number; }
+    const authorshipMetaState = emptyState.Authorship.meta;
+};
+
+const customInstanceProperties = () => {
+    const orm = registerOrmFixture();
+    const session = orm.session(orm.getEmptyState());
+
+    const book = session.Book.create({ title: 'book', publisher: 1 });
+
+    // $ExpectType "title" | "authors" | "publisher"
+    type bookKeys = Exclude<keyof typeof book, keyof Model>;
+
+    // $ExpectError
+    const unknownPropertyError = book.customProp;
+
+    const customBook = session.Book.create({ title: 'customBook', publisher: 1, customProp: { foo: 0, bar: true } });
+
+    // $ExpectType "title" | "authors" | "publisher" | "customProp"
+    type customBookKeys = Exclude<keyof typeof customBook, keyof Model>;
+
+    // $ExpectType { foo: number; bar: boolean; }
+    const customProp = customBook.customProp;
+};
+
+const standaloneReducerFunction = () => {
+    const orm = registerOrmFixture();
+    type OrmType = typeof orm;
+
+    type StateType = ReturnType<OrmType['getEmptyState']>;
+
+    const reducerAddItem = (state: StateType, action: CreateBookAction): StateType => {
+        const session = orm.session(state);
+        session.Book.create(action.payload);
+        return session.state;
+    };
+};
+
+const orderByArguments = () => {
+    const orm = registerOrmFixture();
+    const session = orm.session(orm.getEmptyState());
+
+    // $ExpectType readonly Ref<Book>[]
+    const ordered = session.Book.all()
+        .orderBy(['title'], ['asc'])
+        .orderBy(['publisher', 'title'], [true, 'desc'])
+        .orderBy([book => book.title], ['desc'])
+        .orderBy(['title'])
+        .orderBy([book => book.title, 'publisher'], ['desc', 'asc', 'asc'])
+        .toRefArray();
+};
+
+const selectors = () => {
+    // test fixture, use reselect.createSelector in production code
+    const createSelector = <S, P1, R>(
+        param1Creator: (state: S) => P1,
+        combiner: (param1: P1) => R
+    ): ((state: S) => R) => state => combiner(param1Creator(state));
+
+    const schema = { Book, Authorship, Person, Publisher };
+    type SchemaType = typeof schema;
+    const orm = new ORM<SchemaType>();
+    orm.register(Book, Authorship, Person, Publisher);
+    type OrmType = typeof orm;
+    type StateType = ReturnType<OrmType['getEmptyState']>;
+
+    interface RootState {
+        ormBranch: StateType;
+    }
+
+    const ormSelector = createSelectorORM<SchemaType, Ref<Book>>(orm, session => session.Book.all().toRefArray()[0]);
+
+    const invalidResultSelector = createSelector<RootState, StateType, Ref<Person>>(
+        ({ ormBranch }) => ormBranch,
+        // $ExpectError
+        ormSelector
+    );
+
+    const selector = createSelector<RootState, StateType, Ref<Book>>(
+        ({ ormBranch }) => ormBranch,
+        ormSelector
+    );
+
+    // $ExpectType Ref<Book>
+    const selected = selector({ ormBranch: orm.getEmptyState() });
+};

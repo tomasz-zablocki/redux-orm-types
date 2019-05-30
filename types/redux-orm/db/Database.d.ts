@@ -1,7 +1,7 @@
-import { ModelClassMap, OrmState } from '../ORM';
+import { OrmState } from '../ORM';
 import { CREATE, DELETE, EXCLUDE, FAILURE, FILTER, ORDER_BY, SUCCESS, UPDATE } from '../constants';
 import { Table, TableSpec } from './Table';
-import { SerializableMap } from '../helpers';
+import { IndexedModelClasses, SerializableMap } from '../helpers';
 import { AnyModel } from '../Model';
 
 export type QueryType = typeof FILTER | typeof EXCLUDE | typeof ORDER_BY;
@@ -30,9 +30,9 @@ export interface UpdateSpec<Payload = any> {
     query?: Query;
 }
 
-export interface UpdateResult<T extends Array<typeof AnyModel>, Payload extends object = {}> {
+export interface UpdateResult<MClassMap extends Record<string, typeof AnyModel>, Payload extends object = {}> {
     status: DbActionResult;
-    state: OrmState<ModelClassMap<T>>;
+    state: OrmState<MClassMap>;
     payload: Payload;
 }
 
@@ -45,28 +45,29 @@ export interface Transaction {
     withMutations: boolean;
 }
 
-export interface SchemaSpec<TSchema extends Array<typeof AnyModel>> {
-    tables: { [K in keyof ModelClassMap<TSchema>]: TableSpec<ModelClassMap<TSchema>> };
+export interface SchemaSpec<MClassMap extends IndexedModelClasses<any>> {
+    tables: { [K in keyof MClassMap]: TableSpec<MClassMap[K]> };
 }
 
 export interface DB<
-    TSchema extends Array<typeof AnyModel>,
-    MClassMap extends ModelClassMap<TSchema> = ModelClassMap<TSchema>,
-    Tables = { [K in keyof MClassMap]: Table<MClassMap[K]> }
+    I extends IndexedModelClasses<any>,
+    Tables = { [K in keyof I]: Table<I[K]> }
 > {
-    getEmptyState(): OrmState<MClassMap>;
-    query(tables: Tables, querySpec: QuerySpec, state: OrmState<MClassMap>): QueryResult;
+    getEmptyState(): OrmState<I>;
+    query(tables: Tables, querySpec: QuerySpec, state: OrmState<I>): QueryResult;
     update(
         tables: Tables,
         updateSpec: UpdateSpec,
         tx: Transaction,
-        state: OrmState<MClassMap>
-    ): UpdateResult<MClassMap>;
+        state: OrmState<I>
+    ): UpdateResult<I>;
     describe<K extends keyof Tables>(k: K): Tables[K];
 }
 
 export type DBCreator = typeof createDatabase;
 
-export function createDatabase<TSchema extends Array<typeof AnyModel>>(schemaSpec: SchemaSpec<TSchema>): DB<TSchema>;
+export function createDatabase<I extends IndexedModelClasses<any>>(
+    schemaSpec: SchemaSpec<I>
+): DB<I>;
 
 export default createDatabase;

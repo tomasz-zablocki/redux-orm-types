@@ -58,7 +58,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      *
      * @return a reference to the plain JS object in the store
      */
-    readonly ref: Ref<InstanceType<MClass>>;
+    readonly ref: Ref<this>;
 
     /**
      * @inner
@@ -186,25 +186,22 @@ export type IdType<M extends Model> = IdKey<M> extends infer U
 
 export type FieldSpecKeys<M extends Model, TField extends Field> = keyof PickByValue<ExtractFieldSpecs<M>, TField>;
 
-export type RefFields<
-    M extends Model,
-    TFields extends ModelFields<M> = ModelFields<M>,
-    FieldKeys extends keyof TFields = keyof TFields
-> = Pick<TFields, Extract<FieldKeys, keyof OmitByValue<ExtractFieldSpecs<M>, ManyToMany>>>;
+export type RefFields<M extends Model> = Pick<
+    ModelFields<M>,
+    Extract<keyof ModelFields<M>, keyof OmitByValue<ExtractFieldSpecs<M>, ManyToMany>>
+>;
 
-export type Ref<M extends Model> = {
-    [K in keyof RefFields<M>]: 'getClass' extends keyof RefFields<M>[K]
-        ? ReturnType<RefFields<M>[K]['getId']>
-        : RefFields<M>[K]
+export type Ref<M extends AnyModel> = {
+    [K in keyof RefFields<M>]: ModelFields<M>[K] extends AnyModel ? IdType<ModelFields<M>[K]> : RefFields<M>[K]
 };
 
 export type RefPropOrSimple<M extends Model, K extends string> = K extends keyof RefFields<M>
     ? M['ref'][K]
-    : Serializable;
+    : Serializable | Serializable[];
 
 export type SessionBoundModelFields<M extends Model> = {
-    [K in keyof ModelFields<M>]: ModelFields<M>[K] extends Model<infer TModelClass>
-        ? SessionBoundModel<InstanceType<TModelClass>>
+    [K in keyof ModelFields<M>]: ModelFields<M>[K] extends AnyModel
+        ? SessionBoundModel<ModelFields<M>[K]>
         : ModelFields<M>[K]
 };
 
@@ -222,9 +219,9 @@ export type CreatePropsWithDefaults<
             ? ReadonlyArray<IdOrModelLike<TModel>>
             : TRFields[P] extends Serializable
             ? TFields[P]
-            : TRFields[P] extends Model<infer TModelClass>
+            : TRFields[P] extends AnyModel
             ? P extends FieldSpecKeys<M, OneToOne | ForeignKey>
-                ? IdOrModelLike<InstanceType<TModelClass>>
+                ? IdOrModelLike<TRFields[P]>
                 : never
             : never
     }[K]
@@ -257,4 +254,4 @@ export interface ModelType<M extends Model> extends QuerySet<M> {
     upsert<TProps extends UpsertProps<M>>(props: TProps): SessionBoundModel<M, CustomInstanceProps<M, TProps>>;
 }
 
-export type IdOrModelLike<M extends Model> = IdType<M> | Record<IdKey<M>, IdType<M>>;
+export type IdOrModelLike<M extends Model> = IdType<M> | { [K in IdKey<M>]: IdType<M> };

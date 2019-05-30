@@ -5,47 +5,47 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 3.4
 
-import { SessionType, ORM, ORMOpts, OrmState } from './ORM';
+import { ORM, ORMOpts, OrmState, SessionType } from './ORM';
 import Model, {
-    IdOrModelLike,
-    Ref,
-    SessionBoundModel,
-    IdKey,
-    IdType,
-    ModelType,
-    ModelOptions,
-    RefPropOrSimple,
-    ModelFieldMap,
-    CustomInstanceProps,
-    UpsertProps,
     CreateProps,
+    CustomInstanceProps,
+    IdKey,
+    IdOrModelLike,
+    IdType,
+    ModelField,
+    ModelFieldMap,
+    ModelOptions,
+    ModelType,
+    Ref,
+    RefPropOrSimple,
+    SessionBoundModel,
     UpdateProps,
-    ModelField
+    UpsertProps
 } from './Model';
 import QuerySet, {
-    LookupResult,
-    LookupSpec,
     LookupPredicate,
     LookupProps,
+    LookupResult,
+    LookupSpec,
+    MutableQuerySet,
     SortIteratee,
-    SortOrder,
-    MutableQuerySet
+    SortOrder
 } from './QuerySet';
 import Session from './Session';
-import { TableState, createDatabase } from './db';
+import { createDatabase, TableState } from './db';
 import {
-    Attribute,
-    VirtualFieldSpecMap,
-    FieldSpecMap,
-    OneToOne,
-    ForeignKey,
-    ManyToMany,
     attr,
-    oneToOne,
+    Attribute,
+    FieldSpecMap,
     fk,
-    many
+    ForeignKey,
+    many,
+    ManyToMany,
+    OneToOne,
+    oneToOne,
+    VirtualFieldSpecMap
 } from './fields';
-import { createSelector, createReducer, defaultUpdater, ORMReducer, ORMSelector } from './redux';
+import { createReducer, createSelector, defaultUpdater, ORMReducer, ORMSelector } from './redux';
 
 export {
     VirtualFieldSpecMap,
@@ -93,6 +93,6 @@ export {
     oneToOne,
     fk,
     many
-}
+};
 
 export default Model;
