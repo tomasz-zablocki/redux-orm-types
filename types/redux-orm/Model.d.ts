@@ -3,6 +3,7 @@ import {
     AttributeWithDefault,
     Field,
     FieldDescriptorMap,
+    ForeignKey,
     ManyToMany,
     OneToOne,
     VirtualFieldDescriptorMap
@@ -104,8 +105,6 @@ export type IdType<M extends Model> = IdKey<M> extends infer U
 
 export type DescriptorKeys<M extends Model, TField extends Field> = keyof PickByValue<FieldDescriptors<M>, TField>;
 
-export type OneToOneKeys<M extends Model> = DescriptorKeys<M, OneToOne>;
-
 export type RefFields<
     M extends Model,
     TFields extends ModelFields<M> = ModelFields<M>,
@@ -143,7 +142,7 @@ export type CreatePropsWithDefaults<
             : TRFields[P] extends Serializable
             ? TFields[P]
             : TRFields[P] extends Model<infer TModelClass>
-            ? P extends DescriptorKeys<M, OneToOne>
+            ? P extends DescriptorKeys<M, OneToOne | ForeignKey>
                 ? IdOrModelLike<InstanceType<TModelClass>>
                 : never
             : never

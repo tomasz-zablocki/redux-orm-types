@@ -9,7 +9,6 @@ import {
     ORM,
     OrmState,
     QuerySet,
-    SessionBoundModel,
     SessionWithModels
 } from 'redux-orm';
 

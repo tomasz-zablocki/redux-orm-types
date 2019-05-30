@@ -1,4 +1,4 @@
-import Model, { IdOrModelLike, Serializable } from './Model';
+import Model, { Serializable } from './Model';
 
 export interface FieldInstaller {
     run(): void;
@@ -48,7 +48,7 @@ export interface RelationalFieldOpts {
 export class RelationalField extends Field {
     constructor(toModelName: string, relatedName?: string);
     constructor(opts: RelationalFieldOpts);
-
+    getBackwardsFieldName(model: typeof Model): string;
     createBackwardsDescriptor(
         fieldName: string,
         model?: typeof Model,
@@ -60,7 +60,7 @@ export class RelationalField extends Field {
 export class ForeignKey extends RelationalField {}
 
 export class ManyToMany extends RelationalField {
-    getDefault(): ReadonlyArray<IdOrModelLike<any>>;
+    getDefault(): ReadonlyArray<any>;
 }
 
 export class OneToOne extends RelationalField {}
