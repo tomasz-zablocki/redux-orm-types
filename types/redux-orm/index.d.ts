@@ -5,14 +5,94 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 3.4
 
-import { SessionType, ORM, ORMOpts, OrmState, TableState } from './ORM';
-import Model from './Model';
-import QuerySet from './QuerySet';
+import { SessionType, ORM, ORMOpts, OrmState } from './ORM';
+import Model, {
+    IdOrModelLike,
+    Ref,
+    SessionBoundModel,
+    IdKey,
+    IdType,
+    ModelType,
+    ModelOptions,
+    RefPropOrSimple,
+    ModelFieldMap,
+    CustomInstanceProps,
+    UpsertProps,
+    CreateProps,
+    UpdateProps,
+    ModelField
+} from './Model';
+import QuerySet, {
+    LookupResult,
+    LookupSpec,
+    LookupPredicate,
+    LookupProps,
+    SortIteratee,
+    SortOrder,
+    MutableQuerySet
+} from './QuerySet';
 import Session from './Session';
+import { TableState, createDatabase } from './db';
+import {
+    Attribute,
+    VirtualFieldSpecMap,
+    FieldSpecMap,
+    OneToOne,
+    ForeignKey,
+    ManyToMany,
+    attr,
+    oneToOne,
+    fk,
+    many
+} from './fields';
+import { createSelector, createReducer, defaultUpdater, ORMReducer, ORMSelector } from './redux';
 
-export { Attribute, OneToOne, ForeignKey, ManyToMany, attr, oneToOne, fk, many } from './fields';
-export { SortIteratee, SortOrder, MutableQuerySet } from './QuerySet';
-export { createSelector, createReducer } from './redux';
-export { ORM, OrmState, ORMOpts, Session, TableState, SessionType, Model, QuerySet };
-export { IdOrModelLike, Ref, SessionBoundModel, IdKey, IdType, ModelType } from './Model';
+export {
+    VirtualFieldSpecMap,
+    FieldSpecMap,
+    LookupResult,
+    LookupSpec,
+    LookupPredicate,
+    LookupProps,
+    ModelOptions,
+    RefPropOrSimple,
+    ModelFieldMap,
+    CustomInstanceProps,
+    UpsertProps,
+    CreateProps,
+    UpdateProps,
+    ModelField,
+    SortIteratee,
+    SortOrder,
+    MutableQuerySet,
+    createDatabase,
+    createSelector,
+    createReducer,
+    defaultUpdater,
+    ORMSelector,
+    ORMReducer,
+    IdOrModelLike,
+    Ref,
+    SessionBoundModel,
+    IdKey,
+    IdType,
+    ModelType,
+    ORM,
+    OrmState,
+    ORMOpts,
+    Session,
+    TableState,
+    SessionType,
+    Model,
+    QuerySet,
+    Attribute,
+    OneToOne,
+    ForeignKey,
+    ManyToMany,
+    attr,
+    oneToOne,
+    fk,
+    many
+}
+
 export default Model;

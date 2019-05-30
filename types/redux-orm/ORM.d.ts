@@ -1,21 +1,11 @@
 import { DB, DBCreator, SchemaSpec } from './db';
-import { AnyModel, IdType, ModelType, Ref } from './Model';
+import { AnyModel, ModelType } from './Model';
 import Session from './Session';
+import { TableState } from "./index";
 
 export interface ORMOpts {
     createDatabase: DBCreator;
 }
-
-export type TableState<
-    M extends AnyModel,
-    ArrName extends string = 'items',
-    MapName extends string = 'itemsById',
-    Meta extends object = { maxId: IdType<M> extends number ? number : null }
-> = Record<ArrName, ReadonlyArray<IdType<M>>> &
-    Record<MapName, { readonly [K: string]: Ref<M> }> & {
-        meta: Meta;
-        indexes: object;
-    };
 
 export type ModelClassMap<TSchema extends Array<typeof AnyModel>> = TSchema extends Array<infer U>
     ? [U] extends [typeof AnyModel]

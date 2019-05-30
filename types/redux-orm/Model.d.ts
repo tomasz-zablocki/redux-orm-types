@@ -22,8 +22,6 @@ export interface ModelOptions<IdKey = any> {
 }
 
 /**
- * `Model`
- *
  * The heart of an ORM, the data model.
  *
  * The fields you specify to the Model will be used to generate
