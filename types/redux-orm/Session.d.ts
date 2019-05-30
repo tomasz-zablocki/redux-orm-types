@@ -1,24 +1,22 @@
-import { ModelClassMap, ORM, OrmState, Schema } from './ORM';
+import { ModelClassMap, ORM, OrmState } from './ORM';
 import { DB, QueryResult, QuerySpec } from './db';
-import { AnyModel, ModelType } from './Model';
+import { AnyModel } from './Model';
 
-export default class Session<T extends Schema = [], MTypes extends ModelClassMap<T> = ModelClassMap<T>> {
+export default class Session<
+    TSchema extends Array<typeof AnyModel> = [],
+    MTypes extends ModelClassMap<TSchema> = ModelClassMap<TSchema>
+> {
     readonly accessedModels: Array<keyof MTypes>;
-    schema: ORM<T>;
-    db: DB<T>;
+    schema: ORM<TSchema>;
+    db: DB<TSchema>;
     initialState: OrmState<MTypes>;
     withMutations: boolean;
     batchToken: any;
     sessionBoundModels: ReadonlyArray<MTypes[keyof MTypes]>;
     models: ReadonlyArray<MTypes[keyof MTypes]>;
     state: OrmState<MTypes>;
-    constructor(schema: ORM<T>, db: DB<T>, state: OrmState<MTypes>, withMutations: boolean, batchToken: any);
+    constructor(schema: ORM<TSchema>, db: DB<TSchema>, state: OrmState<MTypes>, withMutations: boolean, batchToken: any);
     markAccessed(modelName: keyof MTypes): void;
     getDataForModel(modelName: keyof MTypes): object;
     query(querySpec: QuerySpec): QueryResult;
 }
-
-export type SessionWithModels<
-    T extends Schema,
-    MClassMap extends Record<string, typeof AnyModel> = ModelClassMap<T>
-> = Session<T> & { [K in keyof MClassMap]: ModelType<InstanceType<MClassMap[K]>> };

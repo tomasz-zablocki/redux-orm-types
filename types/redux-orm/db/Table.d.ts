@@ -10,7 +10,4 @@ export interface TableOpts<MClass extends typeof AnyModel> extends TableSpec<MCl
     mapName?: string;
 }
 
-export class Table<MClass extends typeof AnyModel> {
-    constructor(opts?: TableOpts<MClass>);
-    accessIds(): void;
-}
+export type Table<MClass extends typeof AnyModel> = new (opts?: TableOpts<MClass>) => Table<MClass>;

@@ -1,11 +1,8 @@
-import { ModelClassMap, OrmState, Schema } from '../ORM';
+import { ModelClassMap, OrmState } from '../ORM';
 import { CREATE, DELETE, EXCLUDE, FAILURE, FILTER, ORDER_BY, SUCCESS, UPDATE } from '../constants';
 import { Table, TableSpec } from './Table';
-import { Serializable } from '../Model';
-
-export interface Fields {
-    readonly [K: string]: Serializable;
-}
+import { SerializableMap } from '../helpers';
+import { AnyModel } from '../Model';
 
 export type QueryType = typeof FILTER | typeof EXCLUDE | typeof ORDER_BY;
 
@@ -27,19 +24,19 @@ export type DbAction = typeof CREATE | typeof UPDATE | typeof DELETE;
 
 export type DbActionResult = typeof SUCCESS | typeof FAILURE;
 
-export interface UpdateSpec<Payload = undefined> {
+export interface UpdateSpec<Payload = any> {
     action: DbAction;
     payload?: Payload;
     query?: Query;
 }
 
-export interface UpdateResult<T extends Schema, P extends object = {}> {
+export interface UpdateResult<T extends Array<typeof AnyModel>, Payload extends object = {}> {
     status: DbActionResult;
     state: OrmState<ModelClassMap<T>>;
-    payload: T;
+    payload: Payload;
 }
 
-export interface QueryResult<Row extends Fields = Fields> {
+export interface QueryResult<Row extends SerializableMap = {}> {
     rows: ReadonlyArray<Row>;
 }
 
@@ -48,13 +45,13 @@ export interface Transaction {
     withMutations: boolean;
 }
 
-export interface SchemaSpec<T extends Schema> {
-    tables: { [K in keyof ModelClassMap<T>]: TableSpec<ModelClassMap<T>> };
+export interface SchemaSpec<TSchema extends Array<typeof AnyModel>> {
+    tables: { [K in keyof ModelClassMap<TSchema>]: TableSpec<ModelClassMap<TSchema>> };
 }
 
 export interface DB<
-    T extends Schema,
-    MClassMap extends ModelClassMap<T> = ModelClassMap<T>,
+    TSchema extends Array<typeof AnyModel>,
+    MClassMap extends ModelClassMap<TSchema> = ModelClassMap<TSchema>,
     Tables = { [K in keyof MClassMap]: Table<MClassMap[K]> }
 > {
     getEmptyState(): OrmState<MClassMap>;
@@ -70,6 +67,6 @@ export interface DB<
 
 export type DBCreator = typeof createDatabase;
 
-export function createDatabase<T extends Schema>(schemaSpec: SchemaSpec<T>): DB<T>;
+export function createDatabase<TSchema extends Array<typeof AnyModel>>(schemaSpec: SchemaSpec<TSchema>): DB<TSchema>;
 
 export default createDatabase;

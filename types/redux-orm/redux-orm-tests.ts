@@ -9,7 +9,7 @@ import {
     ORM,
     OrmState,
     QuerySet,
-    SessionWithModels
+    SessionType
 } from 'redux-orm';
 
 // core data which we do not have defaults for
@@ -33,7 +33,7 @@ type TestORMModels = [typeof Test];
 
 type TestORMState = OrmState<TestORMModels>;
 
-type TestSession = SessionWithModels<TestORMModels>;
+type TestSession = SessionType<TestORMModels>;
 
 const orm2 = new ORM<TestORMModels>();
 
@@ -147,6 +147,7 @@ class Book extends Model<typeof Book, BookModelFields> {
     static options = {
         idAttribute: 'title' as const
     };
+
     static reducer(action: BookAction | CreatePersonAction, Book: ModelType<Book>) {
         const bookIdNotExists = (id: string) => !Book.idExists(id);
 
@@ -193,10 +194,11 @@ class Person extends Model<typeof Person, PersonModelFields> {
         firstName: attr(),
         lastName: attr({ getDefault: () => 'asd' })
     };
+
     static reducer(
         action: CreateBookAction | CreatePersonAction,
         Person: ModelType<Person>,
-        session: SessionWithModels<[typeof Book, typeof Authorship, any]>
+        session: SessionType<[typeof Book, typeof Authorship, any]>
     ) {
         switch (action.type) {
             case 'CREATE_PERSON':
@@ -239,7 +241,6 @@ const orm = new ORM<OrmModels>();
 orm.register(Book, Authorship, Person);
 
 const session = orm.session(orm.getEmptyState());
-
 const b = session.Book.create({
     title: 'T1',
     author: session.Person.create({ id: 4, firstName: 'a', lastName: 'v' }),

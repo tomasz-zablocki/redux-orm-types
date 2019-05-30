@@ -1,29 +1,8 @@
-import Model, { Serializable } from './Model';
-
-export interface FieldInstaller {
-    run(): void;
-}
+import Model from './Model';
+import { Serializable } from './helpers';
 
 export class Field {
-    readonly installsForwardsDescriptor: boolean;
-    readonly installsForwardsVirtualField: boolean;
-    readonly installsBackwardsDescriptor: boolean;
-    readonly installsBackwardsVirtualField: boolean;
-    readonly installerClass: { new (): FieldInstaller };
-    index: boolean;
-
-    getClass(): typeof Field;
-
-    references(model: typeof Model): boolean;
-
-    getThroughModelName(fieldName: string, model: typeof Model): string;
-
-    createForwardsDescriptor(
-        fieldName: string,
-        model?: typeof Model,
-        toModel?: typeof Model,
-        throughModel?: typeof Model
-    ): PropertyDescriptor;
+    readonly index: boolean;
 }
 
 export interface AttributeOpts {
@@ -32,6 +11,10 @@ export interface AttributeOpts {
 
 export class Attribute extends Field {
     constructor(opts?: AttributeOpts);
+}
+
+export interface AttributeWithDefault extends Attribute {
+    getDefault(): Serializable;
 }
 
 export interface RelationalFieldOpts {
@@ -49,45 +32,49 @@ export class RelationalField extends Field {
     constructor(toModelName: string, relatedName?: string);
     constructor(opts: RelationalFieldOpts);
     getBackwardsFieldName(model: typeof Model): string;
-    createBackwardsDescriptor(
-        fieldName: string,
-        model?: typeof Model,
-        toModel?: typeof Model,
-        throughModel?: typeof Model
-    ): PropertyDescriptor;
-}
-
-export class ForeignKey extends RelationalField {}
-
-export class ManyToMany extends RelationalField {
-    getDefault(): ReadonlyArray<any>;
 }
 
 export class OneToOne extends RelationalField {}
 
-export function attr<T extends AttributeOpts>(opts?: T): {} extends T ? Attribute : AttributeWithDefault;
-
-export function fk(toModelName: string, relatedName?: string): ForeignKey;
-export function fk(opts: RelationalFieldOpts): ForeignKey;
-
-export function many(toModelName: string, relatedName?: string): ManyToMany;
-export function many(opts: RelationalFieldOpts): ManyToMany;
-
-export function oneToOne(toModelName: string, relatedName?: string): OneToOne;
-export function oneToOne(opts: RelationalFieldOpts): OneToOne;
-
-export interface AttributeWithDefault extends Attribute {
-    getDefault(): Serializable;
+export class ForeignKey extends RelationalField {
+    readonly index: true;
 }
 
-export type FieldDescriptor = Attribute | ForeignKey | ManyToMany | OneToOne;
-
-export type VirtualFieldDescriptor = ForeignKey | ManyToMany | OneToOne;
-
-export interface FieldDescriptorMap {
-    [K: string]: FieldDescriptor;
+export class ManyToMany extends RelationalField {
+    readonly index: false;
 }
 
-export interface VirtualFieldDescriptorMap {
-    [K: string]: VirtualFieldDescriptor;
+export interface AttrCreator {
+    (opts?: AttributeOpts): {} extends AttributeOpts ? Attribute : AttributeWithDefault;
+}
+
+export interface FkCreator {
+    (toModelName: string, relatedName?: string): ForeignKey;
+    (opts: RelationalFieldOpts): ForeignKey;
+}
+
+export interface ManyCreator {
+    (toModelName: string, relatedName?: string): ManyToMany;
+    (opts: RelationalFieldOpts): ManyToMany;
+}
+
+export interface OneToOneCreator {
+    (toModelName: string, relatedName?: string): OneToOne;
+    (opts: RelationalFieldOpts): OneToOne;
+}
+
+export const attr: AttrCreator;
+
+export const oneToOne: OneToOneCreator;
+
+export const fk: FkCreator;
+
+export const many: ManyCreator;
+
+export interface FieldSpecMap {
+    [K: string]: Attribute | ForeignKey | ManyToMany | OneToOne;
+}
+
+export interface VirtualFieldSpecMap {
+    [K: string]: ForeignKey | ManyToMany | OneToOne;
 }
