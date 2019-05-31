@@ -9,12 +9,13 @@ import {
     ORM,
     QuerySet,
     Ref,
-    SessionType
+    IdKey,
+    IdType
 } from 'redux-orm';
 
 interface CreateBookAction {
     type: 'CREATE_BOOK';
-    payload: { coverArt?: string; title: string; publisher: number; authors?: number[] };
+    payload: { coverArt?: string; title: string; publisher: number; authors?: string[] };
 }
 
 interface DeleteBookAction {
@@ -71,7 +72,7 @@ class Book extends Model<typeof Book, BookModelFields> {
 }
 
 interface PersonModelFields {
-    id: number;
+    id: string;
     firstName?: string;
     lastName: string;
     books?: MutableQuerySet<Book>;
@@ -84,35 +85,9 @@ class Person extends Model<typeof Person, PersonModelFields> {
         firstName: attr(),
         lastName: attr({ getDefault: () => 'asd' })
     };
-
-    static reducer(
-        action: RootAction,
-        Person: ModelType<Person>,
-        session: SessionType<{ Authorship: typeof Authorship }>
-    ) {
-        switch (action.type) {
-            case 'CREATE_PUBLISHER':
-                if (!Person.idExists(action.payload.id)) {
-                    Person.create(action.payload);
-                }
-                break;
-            case 'CREATE_BOOK':
-                if (
-                    !session.Authorship.filter({
-                        author: action.payload.publisher
-                    }).exists()
-                ) {
-                    Person.upsert({ id: action.payload.publisher });
-                }
-                break;
-            default:
-                break;
-        }
-    }
 }
 
 interface AuthorshipFields {
-    id: number;
     year?: number;
     book: Book;
     author: Person;
@@ -121,7 +96,6 @@ interface AuthorshipFields {
 class Authorship extends Model<typeof Authorship, AuthorshipFields> {
     static modelName = 'Authorship' as const;
     static fields = {
-        id: attr(),
         year: attr(),
         book: fk('Book'),
         author: fk('Person')
@@ -140,6 +114,23 @@ class Publisher extends Model<typeof Publisher, PublisherFields> {
         id: attr(),
         name: attr()
     };
+    static reducer(
+        action: RootAction,
+        Person: ModelType<Publisher>
+    ) {
+        switch (action.type) {
+            case 'CREATE_PUBLISHER':
+                if (!Publisher.idExists(action.payload.id)) {
+                    Publisher.create(action.payload);
+                }
+                break;
+            case 'CREATE_BOOK':
+                Publisher.upsert({ id: action.payload.publisher });
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 const validationOfRegisteredModelClasses = () => {
@@ -229,6 +220,22 @@ const orderByArguments = () => {
         .orderBy(['title'])
         .orderBy([book => book.title, 'publisher'], ['desc', 'asc'])
         .toRefArray();
+
+    const invalidKeyArgError = session.Book.all()
+        // $ExpectError
+        .orderBy(['notABookPropertyKey']);
+
+    const invalidFunctionArgError = session.Book.all()
+        // $ExpectError
+        .orderBy([book => book.notABookPropertyKey]);
+
+    const invalidStringOrderArgError = session.Book.all()
+        // $ExpectError
+        .orderBy(['title'], ['inc']);
+
+    const invaliOrderTypeError = session.Book.all()
+        // $ExpectError
+        .orderBy(['title'], [4]);
 };
 
 const selectors = () => {
@@ -264,4 +271,30 @@ const selectors = () => {
 
     // $ExpectType Ref<Book>
     const selected = selector({ ormBranch: orm.getEmptyState() });
+};
+
+const idInferenceAndCustomizations = () => {
+    // implicit id
+    // $ExpectType "id"
+    type AuthorshipIdKey = IdKey<Authorship>;
+    // $ExpectType number
+    type AuthorshipIdType = IdType<Authorship>;
+
+    // explicit id same as default
+    // $ExpectType "id"
+    type PublisherIdKey = IdKey<Publisher>;
+    // $ExpectType number
+    type PublisherIdType = IdType<Publisher>;
+
+    // explicit id, default key and custom type
+    // $ExpectType "id"
+    type PersonIdKey = IdKey<Person>;
+    // $ExpectType string
+    type PersonIdType = IdType<Person>;
+
+    // explioit id, custom key and custom type
+    // $ExpectType "title"
+    type BookIdKey = IdKey<Book>;
+    // $ExpectType string
+    type BookIdType = IdType<Book>;
 };
