@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "dependencies": {
+    "utility-types": "^3.7.0"
+  }
+}

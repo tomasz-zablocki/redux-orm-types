@@ -1,8 +1,31 @@
 import { TableOpts } from './db';
 import { AttributeWithDefault, FieldSpecMap, ForeignKey, ManyToMany, OneToOne } from './fields';
-import { Omit, OmitByValue, Optional, PickByValue, Primitive, Serializable, SerializableMap } from './helpers';
 import { SessionType } from './ORM';
 import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
+import { Omit, OmitByValue, Optional, PickByValue } from 'utility-types';
+
+/**
+ * A primitive value
+ */
+export type Primitive = number | string | boolean;
+
+/**
+ * Serializable value: a primitive, undefined, a serializable object or an array of those
+ */
+export type Serializable =
+    | Primitive
+    | Primitive[]
+    | undefined
+    | {
+          [K: string]: Serializable | Serializable[];
+      };
+
+/**
+ * Object restricted to serializable properties only
+ */
+export interface SerializableMap {
+    [K: string]: Serializable | Serializable[];
+}
 
 /**
  * A union of supported model field types

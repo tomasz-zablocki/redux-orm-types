@@ -1,7 +1,7 @@
 import { IndexedModelClasses, OrmState } from '../ORM';
 import { CREATE, DELETE, EXCLUDE, FAILURE, FILTER, ORDER_BY, SUCCESS, UPDATE } from '../constants';
 import { Table, TableSpec } from './Table';
-import { SerializableMap } from '../helpers';
+import { SerializableMap } from '../Model';
 
 export type QueryType = typeof FILTER | typeof EXCLUDE | typeof ORDER_BY;
 

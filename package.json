@@ -2,6 +2,9 @@
   "name": "redux-orm-typings",
   "version": "0.13.3",
   "description": "",
+  "dependencies": {
+    "utility-types": "^3.7.0"
+  },
   "devDependencies": {
     "@types/node": "^12.0.3",
     "dtslint": "latest",

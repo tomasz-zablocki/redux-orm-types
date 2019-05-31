@@ -1,7 +1,13 @@
 import { QueryClause } from './db';
-import Model, { CustomInstanceProps, IdOrModelLike, ModelClass, Ref, SessionBoundModel, UpdateProps } from './Model';
-
-import { SerializableMap } from './helpers';
+import Model, {
+    CustomInstanceProps,
+    IdOrModelLike,
+    ModelClass,
+    Ref,
+    SerializableMap,
+    SessionBoundModel,
+    UpdateProps
+} from './Model';
 
 /**
  * Optional ordering direction.

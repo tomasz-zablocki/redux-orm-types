@@ -1,5 +1,3 @@
-import { Serializable } from './helpers';
-
 export class Field {
     readonly index: boolean;
 }
@@ -13,7 +11,7 @@ export class Attribute extends Field {
 }
 
 export interface AttributeWithDefault extends Attribute {
-    getDefault(): Serializable;
+    getDefault(): any;
 }
 
 export interface RelationalFieldOpts {
