@@ -1,5 +1,4 @@
-import { ORM, OrmState, SessionType } from './ORM';
-import { IndexedModelClasses } from './helpers';
+import { IndexedModelClasses, ORM, OrmState, SessionType } from './ORM';
 
 export interface ORMReducer<I extends IndexedModelClasses<any>, TAction extends any = any> {
     (state: OrmState<I> | undefined, action: TAction): OrmState<I>;

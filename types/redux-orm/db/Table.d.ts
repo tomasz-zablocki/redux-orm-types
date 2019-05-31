@@ -4,13 +4,24 @@ export interface TableSpec<MClass extends typeof AnyModel> {
     fields?: Ref<InstanceType<MClass>>;
 }
 
-export interface TableOpts<MClass extends typeof AnyModel> extends TableSpec<MClass> {
+export interface TableOpts {
     idAttribute?: string;
     arrName?: string;
     mapName?: string;
 }
 
-export type Table<MClass extends typeof AnyModel> = new (opts?: TableOpts<MClass>) => Table<MClass>;
+export type TableProps<MClass extends typeof AnyModel, TTableOpts extends TableOpts> = TableSpec<MClass> & TTableOpts;
+
+export interface DefaultTableOpts {
+    arrName: 'items';
+    mapName: 'itemsById';
+    idAttribute: 'id';
+}
+
+export type Table<
+    MClass extends typeof AnyModel,
+    TTableProps extends TableProps<MClass, any> = DefaultTableOpts
+> = new (userProps?: TTableProps) => Table<MClass, TTableProps>;
 
 export type TableState<
     M extends Model,

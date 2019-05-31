@@ -3,16 +3,50 @@ import Model, { CustomInstanceProps, IdOrModelLike, ModelClass, Ref, SessionBoun
 
 import { SerializableMap } from './helpers';
 
+/**
+ * Optional ordering direction.
+ *
+ * {@see QuerySet.orderBy}
+ */
 export type SortOrder = 'asc' | 'desc' | true | false;
 
+/**
+ * Ordering clause.
+ *
+ * Either a key of SessionBoundModel or a evaluator function accepting plain object Model representation stored in the database.
+ *
+ * {@see QuerySet.orderBy}
+ */
 export type SortIteratee<M extends Model> = keyof Ref<M> | { (row: Ref<M>): any };
 
+/**
+ * Lookup clause as an object specifying props to match with plain object Model representation stored in the database.
+ * {@see QuerySet.exclude}
+ * {@see QuerySet.filter}
+ */
 export type LookupProps<M extends Model> = Partial<Ref<M>>;
 
+/**
+ * Lookup clause as predicate accepting plain object Model representation stored in the database.
+ * {@see QuerySet.exclude}
+ * {@see QuerySet.filter}
+ */
 export type LookupPredicate<M extends Model> = (row: Ref<M>) => boolean;
 
+/**
+ * A union of lookup clauses.
+ * {@see QuerySet.exclude}
+ * {@see QuerySet.filter}
+ */
 export type LookupSpec<M extends Model> = LookupProps<M> | LookupPredicate<M>;
 
+/**
+ * A lookup query result.
+ *
+ * May contain additional properties in case {@link LookupProps} clause had been supplied.
+ * {@see QuerySet.exclude}
+ * {@see QuerySet.filter}
+ */
 export type LookupResult<M extends Model, TLookup extends LookupSpec<M>> = TLookup extends LookupPredicate<M>
     ? QuerySet<M>
     : QuerySet<M, CustomInstanceProps<M, TLookup>>;
@@ -46,7 +80,7 @@ export type LookupResult<M extends Model, TLookup extends LookupSpec<M>> = TLook
 export default class QuerySet<M extends Model = any, InstanceProps extends SerializableMap = {}> {
     /**
      * Creates a `QuerySet`. The constructor is mainly for internal use;
-     * You should access QuerySet instances from {@link Model}.
+     * Access QuerySet instances from {@link Model}.
      *
      * @param  modelClass - the {@link Model} class of objects in this QuerySet.
      * @param  clauses - query clauses needed to evaluate the set.
@@ -79,32 +113,125 @@ export default class QuerySet<M extends Model = any, InstanceProps extends Seria
      */
     static addSharedMethod(methodName: string): void;
 
+    /**
+     * Returns a new {@link QuerySet} instance with the same entities.
+     * @return a new QuerySet with the same entities.
+     */
     all(): QuerySet<M, InstanceProps>;
 
+    /**
+     * Returns the {@link SessionBoundModel} instance at index `index` in the {@link QuerySet} instance if
+     * `withRefs` flag is set to `false`, or a reference to the plain JavaScript
+     * object in the model state if `true`.
+     *
+     * @param  index - index of the model instance to get
+     * @return a {@link Model} derived {@link SessionBoundModel} instance at index
+     *                           `index` in the {@link QuerySet} instance,
+     *                           or undefined if the index is out of bounds.
+     */
     at(index: number): SessionBoundModel<M, InstanceProps> | undefined;
 
+    /**
+     * Returns the session bound {@link Model} instance at index 0
+     * in the {@link QuerySet} instance or undefined if the instance is empty.
+     *
+     *  @return a {@link Model} derived {@link SessionBoundModel} instance or undefined.
+     */
     first(): SessionBoundModel<M, InstanceProps> | undefined;
 
+    /**
+     * Returns the session bound {@link Model} instance at index `QuerySet.count() - 1`
+     * in the {@link QuerySet} instance or undefined if the instance is empty.
+     *
+     *  @return a {@link Model} derived {@link SessionBoundModel} instance or undefined.
+     */
     last(): SessionBoundModel<M, InstanceProps> | undefined;
 
-    filter<TLookup extends LookupSpec<M>>(lookupSpec: TLookup): LookupResult<M, TLookup>;
+    /**
+     * Returns a new {@link QuerySet} instance with entities that match properties in `lookupObj`.
+     *
+     * @param  lookupObj - the properties to match objects with ({@link LookupProps}).
+     * Can also be a function ({@link LookupPredicate}).
+     *
+     * @return a new {@link QuerySet} instance with objects that passed the filter.
+     */
+    filter<TLookup extends LookupSpec<M>>(lookupObj: TLookup): LookupResult<M, TLookup>;
 
-    exclude<TLookup extends LookupSpec<M>>(lookupSpec: TLookup): LookupResult<M, TLookup>;
+    /**
+     * Returns a new {@link QuerySet} instance with entities that do not match properties in `lookupObj`.
+     *
+     * @param  lookupObj - the properties to match objects with ({@link LookupProps}).
+     * Can also be a function ({@link LookupPredicate}).
+     *
+     * @return a new {@link QuerySet} instance with objects that passed the filter.
+     */
+    exclude<TLookup extends LookupSpec<M>>(lookupObj: TLookup): LookupResult<M, TLookup>;
 
-    orderBy(iter: ReadonlyArray<SortIteratee<M>>, orders?: ReadonlyArray<SortOrder>): QuerySet<M>;
+    /**
+     * Returns a new {@link QuerySet} instance with entities ordered by `iteratees` in ascending
+     * order, unless otherwise specified. Delegates to `lodash.orderBy`.
+     *
+     * @param  iteratees - an array where each item can be a string or a
+     *                                           function. If a string is supplied, it should
+     *                                           correspond to property on the entity that will
+     *                                           determine the order. If a function is supplied,
+     *                                           it should return the value to order by.
+     * @param [orders] - the sort orders of `iteratees`. If unspecified, all iteratees
+     *                               will be sorted in ascending order. `true` and `'asc'`
+     *                               correspond to ascending order, and `false` and `'desc`
+     *                               to descending order.
+     * @return a new {@link QuerySet} with objects ordered by `iteratees`.
+     */
+    orderBy(iteratees: ReadonlyArray<SortIteratee<M>>, orders?: ReadonlyArray<SortOrder>): QuerySet<M>;
 
+    /**
+     * Returns the number of {@link Model} instances represented by the QuerySet.
+     *
+     * @return length of the QuerySet
+     */
     count(): number;
 
+    /**
+     * Checks if the {@link QuerySet} instance has any records matching the query
+     * in the database.
+     *
+     * @return `true` if the {@link QuerySet} instance contains entities, else `false`.
+     */
     exists(): boolean;
 
+    /**
+     * Returns an array of the plain objects represented by the QuerySet.
+     * The plain objects are direct references to the store.
+     *
+     * @return references to the plain JS objects represented by the QuerySet
+     */
     toRefArray(): ReadonlyArray<Ref<M>>;
 
+    /**
+     * Returns an array of {@link SessionBoundModel} instances represented by the QuerySet.
+     *
+     * @return session bound model instances represented by the QuerySet
+     */
     toModelArray(): ReadonlyArray<SessionBoundModel<M, InstanceProps>>;
 
-    update(props: UpdateProps<M>): void;
+    /**
+     * Records an update specified with `mergeObj` to all the objects
+     * in the {@link QuerySet} instance.
+     *
+     * @param  mergeObj - an object extending {@link UpdateProps}, to be merged with all the objects in this QuerySet.
+     */
+    update(mergeObj: UpdateProps<M>): void;
 
+    /**
+     * Records a deletion of all the objects in this {@link QuerySet} instance.
+     */
     delete(): void;
 
+    /**
+     * Returns a string representation of QuerySet instance contents.
+     *
+     * @return string representation of QuerySet.
+     */
     toString(): string;
 }
 

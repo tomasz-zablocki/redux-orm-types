@@ -1,27 +1,26 @@
-import { ORM, OrmState } from './ORM';
+import { IndexedModelClasses, ORM, OrmState } from './ORM';
 import { DB, QueryResult, QuerySpec } from './db';
-import { IndexedModelClasses } from "./helpers";
 
 export default class Session<
-    MClassMap extends IndexedModelClasses<any>
+    I extends IndexedModelClasses<any>
 > {
-    readonly accessedModels: Array<keyof MClassMap>;
-    schema: ORM<MClassMap>;
-    db: DB<MClassMap>;
-    initialState: OrmState<MClassMap>;
+    readonly accessedModels: Array<keyof I>;
+    schema: ORM<I>;
+    db: DB<I>;
+    initialState: OrmState<I>;
     withMutations: boolean;
     batchToken: any;
-    sessionBoundModels: ReadonlyArray<MClassMap[keyof MClassMap]>;
-    models: ReadonlyArray<MClassMap[keyof MClassMap]>;
-    state: OrmState<MClassMap>;
+    sessionBoundModels: ReadonlyArray<I[keyof I]>;
+    models: ReadonlyArray<I[keyof I]>;
+    state: OrmState<I>;
     constructor(
-        schema: ORM<MClassMap>,
-        db: DB<MClassMap>,
-        state: OrmState<MClassMap>,
+        schema: ORM<I>,
+        db: DB<I>,
+        state: OrmState<I>,
         withMutations: boolean,
         batchToken: any
     );
-    markAccessed(modelName: keyof MClassMap): void;
-    getDataForModel(modelName: keyof MClassMap): object;
+    markAccessed(modelName: keyof I): void;
+    getDataForModel(modelName: keyof I): object;
     query(querySpec: QuerySpec): QueryResult;
 }

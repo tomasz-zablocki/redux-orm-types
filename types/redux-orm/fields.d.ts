@@ -43,7 +43,8 @@ export class ManyToMany extends RelationalField {
 }
 
 export interface AttrCreator {
-    (opts?: AttributeOpts): {} extends AttributeOpts ? Attribute : AttributeWithDefault;
+    (): Attribute;
+    (opts: AttributeOpts): AttributeWithDefault;
 }
 
 export interface FkCreator {
@@ -71,8 +72,4 @@ export const many: ManyCreator;
 
 export interface FieldSpecMap {
     [K: string]: Attribute | ForeignKey | ManyToMany | OneToOne;
-}
-
-export interface VirtualFieldSpecMap {
-    [K: string]: ForeignKey | ManyToMany | OneToOne;
 }

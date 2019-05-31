@@ -14,7 +14,7 @@ import {
 
 interface CreateBookAction {
     type: 'CREATE_BOOK';
-    payload: { title: string; publisher: number; authors?: number[] };
+    payload: { coverArt?: string; title: string; publisher: number; authors?: number[] };
 }
 
 interface DeleteBookAction {
@@ -31,6 +31,7 @@ type RootAction = CreateBookAction | DeleteBookAction | CreatePublisherAction;
 
 interface BookModelFields {
     title: string;
+    coverArt: string;
     authors?: MutableQuerySet<Person>;
     publisher: Publisher;
 }
@@ -38,9 +39,10 @@ interface BookModelFields {
 class Book extends Model<typeof Book, BookModelFields> {
     static modelName = 'Book' as const;
     static fields = {
-        title: attr({ getDefault: () => 'asd' }),
+        title: attr(),
         authors: many({ to: 'Person', relatedName: 'books', through: 'Authorship' }),
-        publisher: fk('Publisher', 'books')
+        publisher: fk('Publisher', 'books'),
+        coverArt: attr({ getDefault: () => 'empty.png' })
     };
     static options = {
         idAttribute: 'title' as const
@@ -55,8 +57,6 @@ class Book extends Model<typeof Book, BookModelFields> {
             case 'CREATE_PUBLISHER':
                 const { books = [], id } = action.payload;
                 books.filter(bookIdNotExists).forEach(bookTitle => Book.create({ title: bookTitle, publisher: id }));
-
-                books.reduce((query, bookTitle) => query.exclude({ title: bookTitle }), Book.all()).delete();
                 break;
             case 'DELETE_BOOK':
                 const { title } = action.payload;
@@ -189,7 +189,7 @@ const customInstanceProperties = () => {
 
     const book = session.Book.create({ title: 'book', publisher: 1 });
 
-    // $ExpectType "title" | "authors" | "publisher"
+    // $ExpectType "title" | "coverArt" | "authors" | "publisher"
     type bookKeys = Exclude<keyof typeof book, keyof Model>;
 
     // $ExpectError
@@ -197,7 +197,7 @@ const customInstanceProperties = () => {
 
     const customBook = session.Book.create({ title: 'customBook', publisher: 1, customProp: { foo: 0, bar: true } });
 
-    // $ExpectType "title" | "authors" | "publisher" | "customProp"
+    // $ExpectType "title" | "coverArt" | "authors" | "publisher" | "customProp"
     type customBookKeys = Exclude<keyof typeof customBook, keyof Model>;
 
     // $ExpectType { foo: number; bar: boolean; }
@@ -227,7 +227,7 @@ const orderByArguments = () => {
         .orderBy(['publisher', 'title'], [true, 'desc'])
         .orderBy([book => book.title], ['desc'])
         .orderBy(['title'])
-        .orderBy([book => book.title, 'publisher'], ['desc', 'asc', 'asc'])
+        .orderBy([book => book.title, 'publisher'], ['desc', 'asc'])
         .toRefArray();
 };
 

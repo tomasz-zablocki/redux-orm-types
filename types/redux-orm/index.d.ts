@@ -14,7 +14,6 @@ import Model, {
     IdType,
     ModelField,
     ModelFieldMap,
-    ModelOptions,
     ModelType,
     Ref,
     RefPropOrSimple,
@@ -32,7 +31,7 @@ import QuerySet, {
     SortOrder
 } from './QuerySet';
 import Session from './Session';
-import { createDatabase, TableState } from './db';
+import { createDatabase, TableOpts, TableSpec, TableProps, TableState } from './db';
 import {
     attr,
     Attribute,
@@ -42,19 +41,19 @@ import {
     many,
     ManyToMany,
     OneToOne,
-    oneToOne,
-    VirtualFieldSpecMap
+    oneToOne
 } from './fields';
 import { createReducer, createSelector, defaultUpdater, ORMReducer, ORMSelector } from './redux';
 
 export {
-    VirtualFieldSpecMap,
     FieldSpecMap,
     LookupResult,
     LookupSpec,
     LookupPredicate,
     LookupProps,
-    ModelOptions,
+    TableOpts,
+    TableSpec,
+    TableProps,
     RefPropOrSimple,
     ModelFieldMap,
     CustomInstanceProps,

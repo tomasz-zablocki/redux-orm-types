@@ -1,8 +1,7 @@
-import { OrmState } from '../ORM';
+import { IndexedModelClasses, OrmState } from '../ORM';
 import { CREATE, DELETE, EXCLUDE, FAILURE, FILTER, ORDER_BY, SUCCESS, UPDATE } from '../constants';
 import { Table, TableSpec } from './Table';
-import { IndexedModelClasses, SerializableMap } from '../helpers';
-import { AnyModel } from '../Model';
+import { SerializableMap } from '../helpers';
 
 export type QueryType = typeof FILTER | typeof EXCLUDE | typeof ORDER_BY;
 
@@ -30,9 +29,9 @@ export interface UpdateSpec<Payload = any> {
     query?: Query;
 }
 
-export interface UpdateResult<MClassMap extends Record<string, typeof AnyModel>, Payload extends object = {}> {
+export interface UpdateResult<I extends IndexedModelClasses<any>, Payload extends object = {}> {
     status: DbActionResult;
-    state: OrmState<MClassMap>;
+    state: OrmState<I>;
     payload: Payload;
 }
 
@@ -45,8 +44,8 @@ export interface Transaction {
     withMutations: boolean;
 }
 
-export interface SchemaSpec<MClassMap extends IndexedModelClasses<any>> {
-    tables: { [K in keyof MClassMap]: TableSpec<MClassMap[K]> };
+export interface SchemaSpec<I extends IndexedModelClasses<any>> {
+    tables: { [K in keyof I]: TableSpec<I[K]> };
 }
 
 export interface DB<
