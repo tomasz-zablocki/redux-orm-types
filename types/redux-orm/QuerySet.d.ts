@@ -111,8 +111,9 @@ export default class QuerySet<M extends Model = any, InstanceProps extends Seria
      * // assign specific QuerySet to a Model class
      * Book.querySetClass = typeof CustomQuerySet;
      * // register models
-     * const orm = new ORM<[typeof Book]>();
-     * orm.register(typeof Book);
+     * const schema = {Book };
+     * const orm = new ORM<typeof schema>();
+     * orm.register(Book);
      * const session = orm.session(orm.getEmptyState());
      * // use shared method
      * const unreleased = customQs.unreleased();

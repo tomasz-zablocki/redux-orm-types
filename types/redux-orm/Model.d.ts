@@ -351,6 +351,13 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
 }
 
 /**
+ * @internal
+ */
+export type OptionalCreateKeys<M extends Model> = IdType<M> extends number
+    ? IdKey<M> | FieldSpecKeys<M, AttributeWithDefault>
+    : FieldSpecKeys<M, AttributeWithDefault>;
+
+/**
  * Model wildcard type.
  */
 export class AnyModel extends Model {}
@@ -361,7 +368,8 @@ export class AnyModel extends Model {}
  * Relations can be provided in a flexible manner for both many-to-many and foreign key associations
  * @see {@link IdOrModelLike}
  */
-export type CreateProps<M extends Model> = Optional<CreatePropsWithDefaults<M>, FieldSpecKeys<M, AttributeWithDefault>>;
+
+export type CreateProps<M extends Model> = Optional<CreatePropsWithDefaults<M>, OptionalCreateKeys<M>>;
 
 /**
  * {@link Model#upsert} argument type
