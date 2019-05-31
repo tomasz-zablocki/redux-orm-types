@@ -1,13 +1,10 @@
-import { DB, DBCreator, SchemaSpec, TableState } from './db';
+import { DB, DBCreator, TableState } from './db';
 import { AnyModel, ModelType } from './Model';
 import Session from './Session';
 
-export interface ORMOpts {
-    createDatabase: DBCreator;
-}
-
 /**
- * A `{typeof Model[modelName]: typeof Model}` specifying:
+ * A `{typeof Model[modelName]: typeof Model}` map defining:
+ *
  * - database schema
  * - {@link Session} bound Model classes
  * - ORM branch state type
@@ -18,7 +15,7 @@ export type IndexedModelClasses<
 > = { [k in K]: T[K] };
 
 /**
- * A mapped type capable of inferring ORM branch state type based on schema {@link Model}s
+ * A mapped type capable of inferring ORM branch state type based on schema {@link Model}s.
  */
 export type OrmState<MClassMap extends IndexedModelClasses<any>> = {
     [K in keyof MClassMap]: TableState<InstanceType<MClassMap[K]>>
@@ -34,6 +31,15 @@ export type SessionType<I extends IndexedModelClasses<any>> = Session<I> &
     { [K in keyof I]: ModelType<InstanceType<I[K]>> };
 
 /**
+ * ORM instantiation opts.
+ *
+ * Enables customization of database creation.
+ */
+export interface ORMOpts {
+    createDatabase: DBCreator;
+}
+
+/**
  * ORM - the Object Relational Mapper.
  *
  * Use instances of this class to:
@@ -47,16 +53,74 @@ export type SessionType<I extends IndexedModelClasses<any>> = Session<I> &
  * to the database.
  */
 export class ORM<I extends IndexedModelClasses<any>, ModelNames extends keyof I = keyof I> {
+    /**
+     * Creates a new ORM instance.
+     */
     constructor(opts?: ORMOpts);
+
+    /**
+     * Registers a {@link Model} class to the ORM.
+     *
+     * If the model has declared any ManyToMany fields, their
+     * through models will be generated and registered with
+     * this call, unless a custom through model has been specified.
+     *
+     * @param  model - a {@link Model} class to register
+     */
     register(...model: ReadonlyArray<I[ModelNames]>): void;
-    registerManyToManyModelsFor(model: I[ModelNames]): void;
+
+    /**
+     * Gets a {@link Model} class by its name from the registry.
+     *
+     * @param  modelName - the name of the {@link Model} class to get
+     *
+     * @throws If {@link Model} class is not found.
+     *
+     * @return the {@link Model} class, if found
+     */
     get<K extends ModelNames>(modelName: K): I[K];
-    getModelClasses(): ReadonlyArray<I[ModelNames]>;
-    generateSchemaSpec(): SchemaSpec<I>;
-    getDatabase(): DB<I>;
+
+    /**
+     * Returns the empty database state.
+     *
+     * @see {@link OrmState}
+     *
+     * @return empty state
+     */
     getEmptyState(): OrmState<I>;
+
+    /**
+     * Begins an immutable database session.
+     *
+     * @see {@link OrmState}
+     * @see {@link SessionType}
+     *
+     * @param  state  - the state the database manages
+     *
+     * @return a new {@link Session} instance
+     */
     session(state: OrmState<I>): SessionType<I>;
+
+    /**
+     * Begins an mutable database session.
+     *
+     * @see {@link OrmState}
+     * @see {@link SessionType}
+     *
+     * @param  state  - the state the database manages
+     *
+     * @return a new {@link Session} instance
+     */
     mutableSession(state: OrmState<I>): SessionType<I>;
+
+    /**
+     * Acquire database reference.
+     *
+     * If no database exists, an instance is created using either default or supplied implementation of {@link DBCreator}.
+     *
+     * @return A {@link DB} instance structured according to registered schema.
+     */
+    getDatabase(): DB<I>;
 }
 
 export default ORM;
