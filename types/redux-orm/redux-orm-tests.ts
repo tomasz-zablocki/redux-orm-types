@@ -114,10 +114,7 @@ class Publisher extends Model<typeof Publisher, PublisherFields> {
         id: attr(),
         name: attr()
     };
-    static reducer(
-        action: RootAction,
-        Person: ModelType<Publisher>
-    ) {
+    static reducer(action: RootAction, Person: ModelType<Publisher>) {
         switch (action.type) {
             case 'CREATE_PUBLISHER':
                 if (!Publisher.idExists(action.payload.id)) {
@@ -213,27 +210,52 @@ const orderByArguments = () => {
     const session = orm.session(orm.getEmptyState());
 
     // $ExpectType readonly Ref<Book>[]
-    const ordered = session.Book.all()
+    const singleIteratee = session.Book.all()
+        .orderBy('title')
+        .orderBy(book => book.publisher, 'desc')
+        .orderBy(book => book.title, false)
+        .orderBy('publisher', 'asc')
+        .orderBy('publisher', true)
+        .toRefArray();
+
+    // $ExpectType readonly Ref<Book>[]
+    const arrayIteratee = session.Book.all()
         .orderBy(['title'], ['asc'])
         .orderBy(['publisher', 'title'], [true, 'desc'])
         .orderBy([book => book.title], ['desc'])
         .orderBy(['title'])
-        .orderBy([book => book.title, 'publisher'], ['desc', 'asc'])
+        .orderBy([book => book.title, 'publisher'], ['desc', false])
         .toRefArray();
 
-    const invalidKeyArgError = session.Book.all()
+    const invalidSingleKeyIteratee = session.Book.all()
+        // $ExpectError
+        .orderBy('notABookPropertyKey');
+
+    const invalidSingleFunctionIteratee = session.Book.all()
+        // $ExpectError
+        .orderBy([book => book.notABookPropertyKey], false);
+
+    const invalidStringOrderDirectionType = session.Book.all()
+        // $ExpectError
+        .orderBy('title', 'inc');
+
+    const invalidSingleOrderDirectionType = session.Book.all()
+        // $ExpectError
+        .orderBy('title', 4);
+
+    const invalidArrayKeyIteratee = session.Book.all()
         // $ExpectError
         .orderBy(['notABookPropertyKey']);
 
-    const invalidFunctionArgError = session.Book.all()
+    const invalidArrayFunctionIteratee = session.Book.all()
         // $ExpectError
         .orderBy([book => book.notABookPropertyKey]);
 
-    const invalidStringOrderArgError = session.Book.all()
+    const invalidArrayStringOrderDirection = session.Book.all()
         // $ExpectError
         .orderBy(['title'], ['inc']);
 
-    const invaliOrderTypeError = session.Book.all()
+    const invalidArrayOrderDirectionType = session.Book.all()
         // $ExpectError
         .orderBy(['title'], [4]);
 };

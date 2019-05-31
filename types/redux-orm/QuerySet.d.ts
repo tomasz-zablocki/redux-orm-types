@@ -177,18 +177,23 @@ export default class QuerySet<M extends Model = any, InstanceProps extends Seria
      * Returns a new {@link QuerySet} instance with entities ordered by `iteratees` in ascending
      * order, unless otherwise specified. Delegates to `lodash.orderBy`.
      *
-     * @param  iteratees - an array where each item can be a string or a
+     * @param  iteratees - an array or a single {@link SortIteratee} where each item can be a string or a
      *                                           function. If a string is supplied, it should
      *                                           correspond to property on the entity that will
      *                                           determine the order. If a function is supplied,
      *                                           it should return the value to order by.
+     *
      * @param [orders] - the sort orders of `iteratees`. If unspecified, all iteratees
      *                               will be sorted in ascending order. `true` and `'asc'`
      *                               correspond to ascending order, and `false` and `'desc`
-     *                               to descending order.
+     *                               to descending order. Accepts an array or a single {@link SortOrder}.
+     *
      * @return a new {@link QuerySet} with objects ordered by `iteratees`.
      */
-    orderBy(iteratees: ReadonlyArray<SortIteratee<M>>, orders?: ReadonlyArray<SortOrder>): QuerySet<M>;
+    orderBy(
+        iteratees: SortIteratee<M> | ReadonlyArray<SortIteratee<M>>,
+        orders?: SortOrder | ReadonlyArray<SortOrder>
+    ): QuerySet<M>;
 
     /**
      * Returns the number of {@link Model} instances represented by the QuerySet.
