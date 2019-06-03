@@ -1,4 +1,4 @@
-import { DB, DBCreator, TableState } from './db';
+import { Database, DatabaseCreator, TableState } from './db';
 import { AnyModel, ModelType } from './Model';
 import Session from './Session';
 
@@ -18,7 +18,7 @@ export type IndexedModelClasses<
  * A mapped type capable of inferring ORM branch state type based on schema {@link Model}s.
  */
 export type OrmState<MClassMap extends IndexedModelClasses<any>> = {
-    [K in keyof MClassMap]: TableState<InstanceType<MClassMap[K]>>
+    [K in keyof MClassMap]: TableState<MClassMap[K]>
 };
 
 /**
@@ -36,7 +36,7 @@ export type SessionType<I extends IndexedModelClasses<any>> = Session<I> &
  * Enables customization of database creation.
  */
 export interface ORMOpts {
-    createDatabase: DBCreator;
+    createDatabase: DatabaseCreator;
 }
 
 /**
@@ -116,11 +116,11 @@ export class ORM<I extends IndexedModelClasses<any>, ModelNames extends keyof I 
     /**
      * Acquire database reference.
      *
-     * If no database exists, an instance is created using either default or supplied implementation of {@link DBCreator}.
+     * If no database exists, an instance is created using either default or supplied implementation of {@link DatabaseCreator}.
      *
-     * @return A {@link DB} instance structured according to registered schema.
+     * @return A {@link Database} instance structured according to registered schema.
      */
-    getDatabase(): DB<I>;
+    getDatabase(): Database<I>;
 }
 
 export default ORM;

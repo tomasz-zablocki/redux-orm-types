@@ -245,9 +245,10 @@ const restrictRegisterArgsToSchemaModels = () => {
 const inferOrmBranchEmptyState = () => {
     const emptyState = ormFixture().getEmptyState();
 
-    const bookTableState = emptyState.Book; // $ExpectType TableState<Book, "items", "itemsById", { maxId: null; }>
+    const bookTableState = emptyState.Book; // $ExpectType TableState<typeof Book, DefaultMeta<Book>, "items", "itemsById", string>
     const bookItemsById = emptyState.Book.itemsById; // $ExpectType { readonly [K: string]: Ref<Book>; }
-    const authorshipMetaState = emptyState.Authorship.meta; // $ExpectType { maxId: number; }
+    const authorshipMetaState = emptyState.Authorship.meta.maxId; // $ExpectType number
+    const bookMetaState = emptyState.Book.meta.maxId; // $ExpectType number | null
 };
 
 // indexing session instance using registered Model.modelName returns narrowed Model class

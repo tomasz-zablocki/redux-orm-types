@@ -1,35 +1,112 @@
-import Model, { AnyModel, IdType, Ref } from '../Model';
+import Model, { AnyModel, IdType, ModelInfo, Ref } from '../Model';
+import { TableOpts } from '../index';
+import { Field } from '../fields';
 
-export interface TableSpec<MClass extends typeof AnyModel> {
-    fields?: Ref<InstanceType<MClass>>;
-}
-
+/**
+ * {@link TableOpts} used for {@link Table} customization.
+ *
+ * Supplied via {@link Model#options}.
+ *
+ * If no customizations were provided, the table uses {@link DefaultTableOpts}:
+ * <br/>
+ * ```typescript
+ *  {
+ *      idAttribute: 'id',
+ *      arrName:     'items',
+ *      mapName:     'itemsById'
+ *  }
+ * ```
+ * <br/>
+ *  @see {@link Model}
+ *  @see {@link Model#options}
+ *  @see {@link OrmState}
+ */
 export interface TableOpts {
-    idAttribute?: string;
-    arrName?: string;
-    mapName?: string;
+    readonly idAttribute?: string;
+    readonly arrName?: string;
+    readonly mapName?: string;
+    readonly fields?: { [K: string]: Field };
 }
 
-export type TableProps<MClass extends typeof AnyModel, TTableOpts extends TableOpts> = TableSpec<MClass> & TTableOpts;
-
+/**
+ * Default {@link TableOpts}.
+ */
 export interface DefaultTableOpts {
-    arrName: 'items';
-    mapName: 'itemsById';
-    idAttribute: 'id';
+    readonly idAttribute: 'id';
+    readonly arrName: 'items';
+    readonly mapName: 'itemsById';
+    readonly fields: {};
 }
 
-export type Table<
-    MClass extends typeof AnyModel,
-    TTableProps extends TableProps<MClass, any> = DefaultTableOpts
-> = new (userProps?: TTableProps) => Table<MClass, TTableProps>;
+/**
+ * Unbox {@link Model#options} or fallback to default for others.
+ *
+ * @internal
+ */
+export type ExtractModelOptions<MClass extends typeof AnyModel> = MClass['options'] extends () => TableOpts
+    ? ReturnType<MClass['options']>
+    : MClass['options'] extends TableOpts
+    ? MClass['options']
+    : TableOpts;
 
+/**
+ * {@link TableOpts} specific for {@link Model} class provided.
+ */
+export interface ModelTableOpts<
+    MClass extends typeof AnyModel,
+    MOpts extends ExtractModelOptions<MClass> = ExtractModelOptions<MClass>
+> extends TableOpts {
+    readonly idAttribute: MOpts['idAttribute'];
+    readonly arrName: MOpts['arrName'];
+    readonly mapName: MOpts['mapName'];
+    readonly fields: MClass['fields'];
+}
+
+/**
+ * Handles the underlying data structure for a {@link Model} class.
+ */
+export class Table<MClass extends typeof AnyModel, TOpts extends ModelTableOpts<MClass> = ModelTableOpts<MClass>> {
+    /**
+     * Creates a new {@link Table} instance.
+     *
+     * @param   userOpts - options to use.
+     * @param   [userOpts.idAttribute=DefaultTableOpts.idAttribute] - the id attribute of the entity.
+     * @param   [userOpts.arrName=DefaultTableOpts.arrName] - the state attribute where an array of
+     *                                             entity id's are stored
+     * @param   [userOpts.mapName=DefaultTableOpts.mapName] - the state attribute where the entity objects
+     *                                                 are stored in a id to entity object
+     *                                                 map.
+     * @param   [userOpts.fields=DefaultTableOpts.fields] - mapping of field key to {@link Field} object
+     */
+    constructor(userOpts?: TOpts);
+
+    getEmptyState(): TableState<MClass>;
+}
+
+/**
+ * Type of {@link Model} state's branch `meta` field.
+ */
+export interface DefaultMeta<M extends AnyModel> {
+    maxId: IdType<M> extends number ? number : null | number;
+}
+
+export type TableIndexes<MClass extends typeof AnyModel> = {
+    [K in ModelInfo<MClass>['fields']['oneToOneKeys'] | ModelInfo<MClass>['fields']['fkKeys']]: string
+};
+
+/**
+ * A mapped type parametrized by specific {@link Model} class.
+ *
+ * Infers actual state of the ORM branch based on the {@link Model} class provided.
+ */
 export type TableState<
-    M extends Model,
-    ArrName extends string = 'items',
-    MapName extends string = 'itemsById',
-    Meta extends object = { maxId: IdType<M> extends number ? number : null }
-> = Record<ArrName, ReadonlyArray<IdType<M>>> &
-    Record<MapName, { readonly [K: string]: Ref<M> }> & {
-        meta: Meta;
-        indexes: object;
-    };
+    MClass extends typeof AnyModel,
+    MMeta extends object = DefaultMeta<InstanceType<MClass>>,
+    MArrName extends string = ModelInfo<MClass>['options']['arrName'],
+    MMapName extends string = ModelInfo<MClass>['options']['mapName'],
+    MIdType extends IdType<InstanceType<MClass>> = IdType<InstanceType<MClass>>
+> = {
+    meta: MMeta;
+    indexes: TableIndexes<MClass>;
+} & Record<MArrName, MIdType> &
+    Record<MMapName, { readonly [K: string]: Ref<InstanceType<MClass>> }>;

@@ -31,18 +31,8 @@ import QuerySet, {
     SortOrder
 } from './QuerySet';
 import Session from './Session';
-import { createDatabase, TableOpts, TableSpec, TableProps, TableState } from './db';
-import {
-    attr,
-    Attribute,
-    FieldSpecMap,
-    fk,
-    ForeignKey,
-    many,
-    ManyToMany,
-    OneToOne,
-    oneToOne
-} from './fields';
+import { createDatabase, TableOpts, TableState } from './db';
+import { attr, Attribute, FieldSpecMap, fk, ForeignKey, many, ManyToMany, OneToOne, oneToOne } from './fields';
 import { createReducer, createSelector, defaultUpdater, ORMReducer, ORMSelector } from './redux';
 
 export {
@@ -52,8 +42,6 @@ export {
     LookupPredicate,
     LookupProps,
     TableOpts,
-    TableSpec,
-    TableProps,
     RefPropOrSimple,
     ModelFieldMap,
     CustomInstanceProps,

@@ -1,5 +1,6 @@
 import { QueryClause } from './db';
 import Model, {
+    AnyModel,
     CustomInstanceProps,
     IdOrModelLike,
     ModelClass,
@@ -83,7 +84,7 @@ export type LookupResult<M extends Model, TLookup extends LookupSpec<M>> = TLook
  * @template M type of {@link Model} instances returned by QuerySet's methods.
  * @template InstanceProps additional properties available on QuerySet's elements.
  */
-export default class QuerySet<M extends Model = any, InstanceProps extends SerializableMap = {}> {
+export default class QuerySet<M extends AnyModel = any, InstanceProps extends SerializableMap = {}> {
     /**
      * Creates a `QuerySet`. The constructor is mainly for internal use;
      * Access QuerySet instances from {@link Model}.
@@ -259,6 +260,6 @@ export interface ManyToManyExtensions<M extends Model> {
 /**
  * A {@link QuerySet} extended with {@link ManyToMany} specific functionality - {@link ManyToManyExtensions}.
  */
-export interface MutableQuerySet<M extends Model = any, InstanceProps extends SerializableMap = {}>
+export interface MutableQuerySet<M extends AnyModel = any, InstanceProps extends SerializableMap = {}>
     extends QuerySet<M, InstanceProps>,
         ManyToManyExtensions<M> {}

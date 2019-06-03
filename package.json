@@ -19,6 +19,6 @@
   },
   "scripts": {
     "lint": "dtslint types",
-    "run": "ts-node test/index.ts"
+    "run": "ts-node types/redux-orm/redux-orm-tests2.ts"
   }
 }
