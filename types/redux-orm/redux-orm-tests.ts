@@ -190,6 +190,50 @@ const argPropertyTypeRestrictionsOnCreate = () => {
     Book.create({ title: 'B1', publisher: { index: 0 }, authors: [authorModel, true] }); // $ExpectError
 };
 
+// ModelFields contribute to type constraints within ModelType.create arguments
+const argPropertyTypeRestrictionsOnUpsert = () => {
+    const { Book, Publisher, Person } = sessionFixture();
+
+    /** Upsert requires id to be provided */
+    Book.upsert({ publisher: 1 }); // $ExpectError
+
+    // $ExpectType SessionBoundModel<Book, CustomInstanceProps<Book, { title: string; publisher: number; }, Pick<{ title: string; publisher: number; }, never>>>
+    Book.upsert({ title: 'B1', publisher: 1 });
+
+    /* Incompatible property types: */
+    Book.upsert({ title: 4, publisher: 'P1' }); // $ExpectError
+    Book.upsert({ title: 'B1', publisher: 'P1' }); // $ExpectError
+    Book.upsert({ title: 'B1', publisher: 1, coverArt: 4 }); // $ExpectError
+    Book.upsert({ title: 'B1', publisher: 1, authors: {} }); // $ExpectError
+    Book.upsert({ title: 'B1', publisher: 1, authors: () => null }); // $ExpectError
+
+    /**
+     * Properties associated to relational fields may be supplied with:
+     *
+     * - a primitive type matching id type of relation target
+     * - a Ref type derived from relation target
+     * - Model/SessionBoundModel instance matching relation target
+     * - a map containing {Idkey:IdType} entry, where IdKey/IdType are compatible with relation target id key:type signature
+     *
+     * In case of MutableQuerySets/many-to-many relationships, an array of union of above-mentioned types is accepted
+     */
+    const authorModel = Person.upsert({ id: 'A1', firstName: 'A1', lastName: 'A1' });
+    const publisherModel = Publisher.upsert({ name: 'P1', index: 1 });
+    Book.upsert({ title: 'B1', publisher: publisherModel, authors: [authorModel] });
+    Book.upsert({ title: 'B1', publisher: publisherModel.ref, authors: [authorModel.ref] });
+    Book.upsert({
+        title: 'B1',
+        publisher: { index: publisherModel.index },
+        authors: [{ id: authorModel.id }, 'A1', authorModel, authorModel.ref]
+    });
+
+    /** Id types are verified to match relation target */
+    Book.create({ title: 'B1', publisher: authorModel }); // $ExpectError
+    Book.create({ title: 'B1', publisher: publisherModel.ref, authors: [publisherModel.ref, 'A1'] }); // $ExpectError
+    Book.create({ title: 'B1', publisher: { index: 'P1 ' } }); // $ExpectError
+    Book.create({ title: 'B1', publisher: { index: 0 }, authors: [authorModel, true] }); // $ExpectError
+};
+
 // restriction of allowed ORM.register args
 const restrictRegisterArgsToSchemaModels = () => {
     const incompleteSchema = { Book, Authorship, Person };
@@ -268,21 +312,21 @@ const orderByArguments = () => {
 
     // $ExpectType readonly Ref<Book>[]
     const singleIteratee = booksQuerySet
-    .orderBy('title')
-    .orderBy(book => book.publisher, 'desc')
-    .orderBy(book => book.title, false)
-    .orderBy('publisher', 'asc')
-    .orderBy('publisher', true)
-    .toRefArray();
+        .orderBy('title')
+        .orderBy(book => book.publisher, 'desc')
+        .orderBy(book => book.title, false)
+        .orderBy('publisher', 'asc')
+        .orderBy('publisher', true)
+        .toRefArray();
 
     // $ExpectType readonly Ref<Book>[]
     const arrayIteratee = booksQuerySet
-    .orderBy(['title'], ['asc'])
-    .orderBy(['publisher', 'title'], [true, 'desc'])
-    .orderBy([book => book.title], ['desc'])
-    .orderBy(['title'])
-    .orderBy([book => book.title, 'publisher'], ['desc', false])
-    .toRefArray();
+        .orderBy(['title'], ['asc'])
+        .orderBy(['publisher', 'title'], [true, 'desc'])
+        .orderBy([book => book.title], ['desc'])
+        .orderBy(['title'])
+        .orderBy([book => book.title, 'publisher'], ['desc', false])
+        .toRefArray();
 
     const invalidSingleKeyIteratee = booksQuerySet.orderBy('notABookPropertyKey'); // $ExpectError
     const invalidSingleFunctionIteratee = booksQuerySet.orderBy([book => book.notABookPropertyKey], false); // $ExpectError

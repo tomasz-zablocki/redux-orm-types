@@ -2,7 +2,7 @@ import { TableOpts } from './db';
 import { AttributeWithDefault, FieldSpecMap, ForeignKey, ManyToMany, OneToOne } from './fields';
 import { SessionType } from './ORM';
 import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
-import { Omit, OmitByValue, Optional, PickByValue } from 'utility-types';
+import { Omit, OmitByValue, Optional, Overwrite, PickByValue } from 'utility-types';
 
 /**
  * A primitive value
@@ -377,7 +377,7 @@ export type CreateProps<M extends Model> = Optional<CreatePropsWithDefaults<M>, 
  * Relations can be provided in a flexible manner for both many-to-many and foreign key associations
  * @see {@link IdOrModelLike}
  */
-export type UpsertProps<M extends Model> = Optional<CreateProps<M>>;
+export type UpsertProps<M extends Model> = Overwrite<Optional<CreateProps<M>>, Required<IdEntry<M>>>;
 
 /**
  * {@link Model#update} argument type
@@ -423,6 +423,10 @@ export type IdType<M extends Model> = IdKey<M> extends infer U
             : never
         : number
     : number;
+
+export type IdEntry<M extends Model> = {
+    [K in IdKey<M>]: IdType<M>
+};
 
 /**
  * Type of {@link Model.ref} / database entry for a particular Model type
