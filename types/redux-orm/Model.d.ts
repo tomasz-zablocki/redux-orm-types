@@ -1,9 +1,8 @@
 import { TableOpts } from './db';
-import { Attribute, AttributeWithDefault, FieldSpecMap, ForeignKey, ManyToMany, OneToOne } from './fields';
+import { AttributeWithDefault, FieldSpecMap, ForeignKey, ManyToMany, OneToOne } from './fields';
 import { SessionType } from './ORM';
 import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
-import { Assign, Omit, OmitByValue, Optional, OptionalKeys, Overwrite, PickByValue } from './helpers';
-import { DefaultTableOpts, ModelTableOpts } from './db/Table';
+import { Omit, OmitByValue, Optional, OptionalKeys, Overwrite, PickByValue } from './helpers';
 import { IdOrModelLike, ModelField } from './index';
 /**
  * A primitive value
@@ -521,10 +520,7 @@ export type SessionBoundModelFields<M extends Model> = {
 
 export type CreateProps<
     M extends AnyModel,
-    MInfo extends ModelInfo<ModelClass<M>> = ModelInfo<ModelClass<M>>,
-    MIndexedFieldKeys extends FieldSpecKeys<M, OneToOne> | FieldSpecKeys<M, ForeignKey> =
-        | FieldSpecKeys<M, OneToOne>
-        | FieldSpecKeys<M, ForeignKey>
+    MIndexedFieldKeys extends FieldSpecKeys<M, OneToOne | ForeignKey> = FieldSpecKeys<M, OneToOne | ForeignKey>
 > = Optional<
     {
         [K in keyof ModelFields<M>]: {
@@ -543,37 +539,6 @@ export type CreateProps<
 >;
 
 /**
- * Utility
- *
- * @internal
- */
-export interface ModelInfo<
-    MClass extends typeof AnyModel,
-    M extends AnyModel = InstanceType<MClass>,
-    MFields extends ModelFields<M> = ModelFields<M>,
-    MFieldsReq extends Required<MFields> = Required<MFields>,
-    MClassFields extends MClass['fields'] = MClass['fields']
-> {
-    options: Assign<ModelTableOpts<MClass>, DefaultTableOpts>;
-    ref: Ref<M>;
-    fields: {
-        attrKeys: FieldSpecKeys<M, Attribute>;
-        oneToOneKeys: FieldSpecKeys<M, OneToOne>;
-        fkKeys: FieldSpecKeys<M, ForeignKey>;
-        manyKeys: FieldSpecKeys<M, ManyToMany>;
-    };
-    idKey: IdKey<M>;
-    idType: IdType<M>;
-    idEntry: IdEntry<M>;
-    instanceFields: {
-        mutableQuerySetKeys: keyof PickByValue<MFieldsReq, MutableQuerySet>;
-        querySetKeys: keyof OmitByValue<PickByValue<MFieldsReq, QuerySet>, MutableQuerySet>;
-        modelKeys: keyof PickByValue<MFieldsReq, Model>;
-        attributeKeys: keyof OmitByValue<MFieldsReq, QuerySet | Model>;
-    };
-}
-
-/**
  * @internal
  */
 export type RelationKeys<M extends AnyModel> = Extract<
@@ -589,18 +554,30 @@ export type MutableQuerySetKeys<M extends AnyModel> = Extract<
     keyof PickByValue<Required<ModelFields<M>>, MutableQuerySet>
 >;
 
+/**
+ * @internal
+ */
 export type ModelRelationKeys<M extends AnyModel> = Extract<
     keyof Required<ModelFields<M>>,
     keyof PickByValue<Required<ModelFields<M>>, Model>
 >;
 
+/**
+ * @internal
+ */
 export type QuerySetKeys<M extends AnyModel> = Extract<
     keyof Required<ModelFields<M>>,
     keyof PickByValue<Required<ModelFields<M>>, QuerySet>
 >;
 
+/**
+ * @internal
+ */
 export type VirtualQuerySetKeys<M extends AnyModel> = Exclude<QuerySetKeys<M>, MutableQuerySetKeys<M>>;
 
+/**
+ * @internal
+ */
 export type OtherKeys<M extends AnyModel> = Exclude<
     keyof Required<ModelFields<M>>,
     QuerySetKeys<M> | ModelRelationKeys<M>

@@ -1,6 +1,7 @@
-import Model, { AnyModel, IdType, ModelInfo, Ref } from '../Model';
-import { TableOpts } from '../index';
+import Model, { AnyModel, FieldSpecKeys, IdType, Ref } from '../Model';
+import { ForeignKey, OneToOne, TableOpts } from '../index';
 import { Field } from '../fields';
+import { Assign } from '../helpers';
 
 /**
  * {@link TableOpts} used for {@link Table} customization.
@@ -91,7 +92,7 @@ export interface DefaultMeta<M extends AnyModel> {
 }
 
 export type TableIndexes<MClass extends typeof AnyModel> = {
-    [K in ModelInfo<MClass>['fields']['oneToOneKeys'] | ModelInfo<MClass>['fields']['fkKeys']]: string
+    [K in FieldSpecKeys<InstanceType<MClass>, OneToOne | ForeignKey>]: string
 };
 
 /**
@@ -102,8 +103,8 @@ export type TableIndexes<MClass extends typeof AnyModel> = {
 export type TableState<
     MClass extends typeof AnyModel,
     MMeta extends object = DefaultMeta<InstanceType<MClass>>,
-    MArrName extends string = ModelInfo<MClass>['options']['arrName'],
-    MMapName extends string = ModelInfo<MClass>['options']['mapName'],
+    MArrName extends string = Assign<ModelTableOpts<MClass>, DefaultTableOpts>['arrName'],
+    MMapName extends string = Assign<ModelTableOpts<MClass>, DefaultTableOpts>['mapName'],
     MIdType extends IdType<InstanceType<MClass>> = IdType<InstanceType<MClass>>
 > = {
     meta: MMeta;
