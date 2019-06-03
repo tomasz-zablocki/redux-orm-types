@@ -264,40 +264,34 @@ const standaloneReducerFunction = () => {
 // QuerySet.orderBy overloads accept iteratees applicable to QuerySet's type only
 const orderByArguments = () => {
     const session = sessionFixture();
+    const booksQuerySet = session.Book.all();
 
     // $ExpectType readonly Ref<Book>[]
-    const singleIteratee = session.Book.all()
-        .orderBy('title')
-        .orderBy(book => book.publisher, 'desc')
-        .orderBy(book => book.title, false)
-        .orderBy('publisher', 'asc')
-        .orderBy('publisher', true)
-        .toRefArray();
+    const singleIteratee = booksQuerySet
+    .orderBy('title')
+    .orderBy(book => book.publisher, 'desc')
+    .orderBy(book => book.title, false)
+    .orderBy('publisher', 'asc')
+    .orderBy('publisher', true)
+    .toRefArray();
 
     // $ExpectType readonly Ref<Book>[]
-    const arrayIteratee = session.Book.all()
-        .orderBy(['title'], ['asc'])
-        .orderBy(['publisher', 'title'], [true, 'desc'])
-        .orderBy([book => book.title], ['desc'])
-        .orderBy(['title'])
-        .orderBy([book => book.title, 'publisher'], ['desc', false])
-        .toRefArray();
+    const arrayIteratee = booksQuerySet
+    .orderBy(['title'], ['asc'])
+    .orderBy(['publisher', 'title'], [true, 'desc'])
+    .orderBy([book => book.title], ['desc'])
+    .orderBy(['title'])
+    .orderBy([book => book.title, 'publisher'], ['desc', false])
+    .toRefArray();
 
-    const invalidSingleKeyIteratee = session.Book.all().orderBy('notABookPropertyKey'); // $ExpectError
-
-    const invalidSingleFunctionIteratee = session.Book.all().orderBy([book => book.notABookPropertyKey], false); // $ExpectError
-
-    const invalidStringOrderDirectionType = session.Book.all().orderBy('title', 'inc'); // $ExpectError
-
-    const invalidSingleOrderDirectionType = session.Book.all().orderBy('title', 4); // $ExpectError
-
-    const invalidArrayKeyIteratee = session.Book.all().orderBy(['notABookPropertyKey']); // $ExpectError
-
-    const invalidArrayFunctionIteratee = session.Book.all().orderBy([book => book.notABookPropertyKey]); // $ExpectError
-
-    const invalidArrayStringOrderDirection = session.Book.all().orderBy(['title'], ['inc']); // $ExpectError
-
-    const invalidArrayOrderDirectionType = session.Book.all().orderBy(['title'], [4]); // $ExpectError
+    const invalidSingleKeyIteratee = booksQuerySet.orderBy('notABookPropertyKey'); // $ExpectError
+    const invalidSingleFunctionIteratee = booksQuerySet.orderBy([book => book.notABookPropertyKey], false); // $ExpectError
+    const invalidStringOrderDirectionType = booksQuerySet.orderBy('title', 'inc'); // $ExpectError
+    const invalidSingleOrderDirectionType = booksQuerySet.orderBy('title', 4); // $ExpectError
+    const invalidArrayKeyIteratee = booksQuerySet.orderBy(['notABookPropertyKey']); // $ExpectError
+    const invalidArrayFunctionIteratee = booksQuerySet.orderBy([book => book.notABookPropertyKey]); // $ExpectError
+    const invalidArrayStringOrderDirection = booksQuerySet.orderBy(['title'], ['inc']); // $ExpectError
+    const invalidArrayOrderDirectionType = booksQuerySet.orderBy(['title'], [4]); // $ExpectError
 };
 
 const selectors = () => {
