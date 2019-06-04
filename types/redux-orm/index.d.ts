@@ -3,7 +3,7 @@
 // Definitions by: Andrey Goncharov <https://github.com/keenondrums>
 //                 Tomasz Zabłocki <https://github.com/tomasz-zablocki>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// TypeScript Version: 3.4
+// TypeScript Version: 3.5
 
 import { ORM, ORMOpts, OrmState } from './ORM';
 import Model, {

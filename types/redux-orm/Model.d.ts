@@ -1,7 +1,7 @@
 import { TableOpts } from './db';
 import { IdAttribute } from './db/Table';
 import { Attribute, AttributeWithDefault, FieldSpecMap, ForeignKey, OneToOne } from './fields';
-import { Omit, Optional, OptionalKeys, Overwrite, PickByValue } from './helpers';
+import { Optional, OptionalKeys, Overwrite, PickByValue } from './helpers';
 import { IdOrModelLike, ModelField } from './index';
 import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
 import { OrmSession } from './Session';
@@ -161,7 +161,9 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * @param  userProps - the new {@link Model}'s properties.
      * @return a new {@link SessionBoundModel} instance.
      */
-    static create<TProps extends CreateProps<Model>>(userProps: TProps): SessionBoundModel<Model, CustomInstanceProps<Model, TProps>>;
+    static create<TProps extends CreateProps<Model>>(
+        userProps: TProps
+    ): SessionBoundModel<Model, CustomInstanceProps<Model, TProps>>;
 
     /**
      * Creates a new or update existing record in the database, instantiates a {@link Model} and returns it.
@@ -172,7 +174,9 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * @param  userProps - the upserted {@link Model}'s properties.
      * @return a {@link SessionBoundModel} instance.
      */
-    static upsert<TProps extends UpsertProps<Model>>(userProps: TProps): SessionBoundModel<Model, CustomInstanceProps<Model, TProps>>;
+    static upsert<TProps extends UpsertProps<Model>>(
+        userProps: TProps
+    ): SessionBoundModel<Model, CustomInstanceProps<Model, TProps>>;
 
     /**
      * Gets the {@link Model} instance that matches properties in `lookupObj`.
@@ -364,7 +368,7 @@ export class AnyModel extends Model {}
  * Relations can be provided in a flexible manner for both many-to-many and foreign key associations
  * @see {@link IdOrModelLike}
  */
-export type UpsertProps<M extends Model> = Overwrite<Optional<CreateProps<M>>, Required<IdEntry<M>>>;
+export type UpsertProps<M extends Model> = Overwrite<Partial<CreateProps<M>>, Required<IdEntry<M>>>;
 
 /**
  * {@link Model#update} argument type
@@ -382,10 +386,10 @@ export type UpdateProps<M extends Model> = Omit<UpsertProps<M>, IdKey<M>>;
 export type CustomInstanceProps<M extends AnyModel, Props extends object> = {
     [K in keyof Props]: {
         [P in K]: P extends keyof ModelFields<M>
-            ? SessionBoundModelField<M, P>
-            : Props[P] extends Serializable
-            ? Props[P]
-            : never
+                  ? SessionBoundModelField<M, P>
+                  : Props[P] extends Serializable
+                    ? Props[P]
+                    : never
     }[K]
 };
 
@@ -402,12 +406,12 @@ export type IdKey<M extends Model> = IdAttribute<ModelClass<M>>;
  * Falls back to `number` if not specified explicitly via {@link Model.options}.
  */
 export type IdType<M extends Model> = IdKey<M> extends infer U
-    ? U extends keyof ModelFields<M>
-        ? ModelFields<M>[U] extends string|number
-            ? ModelFields<M>[U]
-            : never
-        : number
-    : number;
+                                      ? U extends keyof ModelFields<M>
+                                        ? ModelFields<M>[U] extends string | number
+                                          ? ModelFields<M>[U]
+                                          : never
+                                        : number
+                                      : number;
 
 /**
  * A single entry map representing IdKey: IdType property of supplied {@link Model}.
@@ -428,8 +432,8 @@ export type Ref<M extends Model> = {
  * - any serializable value - if propertyName is not among declared Model fields
  */
 export type RefPropOrSimple<M extends Model, K extends string> = K extends keyof RefFields<M>
-    ? M['ref'][K]
-    : Serializable | Serializable[];
+                                                                 ? M['ref'][K]
+                                                                 : Serializable | Serializable[];
 
 /**
  * A Model-derived mapped type, representing model instance bound to a session.
@@ -439,8 +443,8 @@ export type RefPropOrSimple<M extends Model, K extends string> = K extends keyof
  * @link Model#create} or {@link Model#upsert} calls.
  */
 export type SessionBoundModel<M extends Model = any, InstanceProps extends SerializableMap = {}> = M &
-    InstanceProps &
-    { [K in keyof ModelFields<M>]: SessionBoundModelField<M, K> };
+                                                                                                   InstanceProps &
+                                                                                                   { [K in keyof ModelFields<M>]: SessionBoundModelField<M, K> };
 
 /**
  * Static side of a particular {@link Model} with member signatures narrowed to provided {@link Model} type
@@ -499,14 +503,16 @@ export type FieldSpecKeys<M extends Model, TField> = keyof PickByValue<ModelClas
 export type RefFields<M extends Model> = Pick<
     ModelFields<M>,
     Extract<keyof ModelFields<M>, FieldSpecKeys<M, Attribute | OneToOne | ForeignKey>>
->;
+    >;
 
 /**
  * @internal
  */
-export type SessionBoundModelField<M extends Model, K extends keyof ModelFields<M>> = K extends ModelRelationKeys<M>
-    ? SessionBoundModel<ModelFields<M>[K]>
-    : ModelFields<M>[K];
+export type SessionBoundModelField<M extends Model, K extends keyof ModelFields<M>> = Required<
+    ModelFields<M>
+    >[K] extends Model
+                                                                                      ? SessionBoundModel<ModelFields<M>[K]>
+                                                                                      : ModelFields<M>[K];
 
 /**
  * {@link Model#create} argument type
@@ -515,58 +521,27 @@ export type SessionBoundModelField<M extends Model, K extends keyof ModelFields<
  * @see {@link IdOrModelLike}
  */
 
-export type CreateProps<M extends AnyModel> = Optional<
+export type CreateProps<
+    M extends AnyModel,
+    RFields extends Required<ModelFields<M>> = Required<ModelFields<M>>
+    > = Optional<
     {
         [K in keyof ModelFields<M>]: {
-            [P in K]: P extends OtherKeys<M>
-                ? ModelFields<M>[P]
-                : P extends MutableQuerySetKeys<M>
-                ? ReadonlyArray<IdOrModelLike<RelatedModel<M, P>>>
-                : P extends FieldSpecKeys<M, OneToOne | ForeignKey>
-                ? (P extends ModelRelationKeys<M> ? IdOrModelLike<RelatedModel<M, P>> : never)
-                : never
-        }[K]
+        [P in K]: RFields[P] extends MutableQuerySet<infer RM>
+                  ? ReadonlyArray<IdOrModelLike<RM>>
+                  : RFields[P] extends AnyModel
+                    ? (P extends FieldSpecKeys<M, OneToOne | ForeignKey> ? IdOrModelLike<RFields[P]> : never)
+                    : RFields[P] extends QuerySet
+                      ? never
+                      : RFields[P]
+    }[K]
     },
     OptionalCreatePropsKeys<M>
->;
-
-/**
- * @internal
- */
-export type MutableQuerySetKeys<M extends AnyModel> = keyof PickByValue<Required<ModelFields<M>>, MutableQuerySet>;
-
-/**
- * @internal
- */
-export type ModelRelationKeys<M extends AnyModel> = keyof PickByValue<Required<ModelFields<M>>, Model>;
-
-/**
- * @internal
- */
-export type QuerySetKeys<M extends AnyModel> = keyof PickByValue<Required<ModelFields<M>>, QuerySet>;
-
-/**
- * @internal
- */
-export type OtherKeys<M extends AnyModel> = Exclude<
-    keyof Required<ModelFields<M>>,
-    QuerySetKeys<M> | ModelRelationKeys<M>
->;
-
-/**
- * @internal
- */
-export type RelatedModel<
-    M extends AnyModel,
-    K extends MutableQuerySetKeys<M> | QuerySetKeys<M> | ModelRelationKeys<M>,
-    MFields extends Required<ModelFields<M>> = Required<ModelFields<M>>
-> = MFields[K] extends QuerySet<infer RM, infer Props>
-    ? RM
-    : MFields[K];
+    >;
 
 /**
  * @internal
  */
 export type OptionalCreatePropsKeys<M extends AnyModel> = IdType<M> extends number
-    ? IdKey<M> | OptionalKeys<ModelFields<M>> | FieldSpecKeys<M, AttributeWithDefault>
-    : OptionalKeys<ModelFields<M>> | FieldSpecKeys<M, AttributeWithDefault>;
+                                                          ? IdKey<M> | OptionalKeys<ModelFields<M>> | FieldSpecKeys<M, AttributeWithDefault>
+                                                          : OptionalKeys<ModelFields<M>> | FieldSpecKeys<M, AttributeWithDefault>;
