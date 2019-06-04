@@ -1,6 +1,6 @@
-import { TableOpts } from './db';
+import { ModelTableOpts, TableOpts } from './db';
 import { IdAttribute } from './db/Table';
-import { Attribute, AttributeWithDefault, FieldSpecMap, ForeignKey, OneToOne } from './fields';
+import { AttributeWithDefault, FieldSpecMap, ForeignKey, ManyToMany, OneToOne } from './fields';
 import { Optional, OptionalKeys, Overwrite, PickByValue } from './helpers';
 import { IdOrModelLike, ModelField } from './index';
 import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
@@ -124,19 +124,14 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      *
      * @return a reference to the plain JS object in the store
      */
-    readonly ref: Ref<this>;
-
-    /**
-     * @inner
-     */
-    readonly __$infer$__: Fields;
+    readonly ref: Ref<InstanceType<MClass>>;
 
     /**
      * Creates a Model instance from it's properties.
      * Don't use this to create a new record; Use the static method {@link Model#create}.
      * @param props - the properties to instantiate with
      */
-    constructor(props: object);
+    constructor(props: Fields);
 
     /**
      * Model specific reducer function.
@@ -161,9 +156,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * @param  userProps - the new {@link Model}'s properties.
      * @return a new {@link SessionBoundModel} instance.
      */
-    static create<TProps extends CreateProps<Model>>(
-        userProps: TProps
-    ): SessionBoundModel<Model, CustomInstanceProps<Model, TProps>>;
+    static create<M extends AnyModel, TProps extends CreateProps<M>>(userProps: TProps): SessionBoundModel<M, TProps>;
 
     /**
      * Creates a new or update existing record in the database, instantiates a {@link Model} and returns it.
@@ -174,9 +167,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * @param  userProps - the upserted {@link Model}'s properties.
      * @return a {@link SessionBoundModel} instance.
      */
-    static upsert<TProps extends UpsertProps<Model>>(
-        userProps: TProps
-    ): SessionBoundModel<Model, CustomInstanceProps<Model, TProps>>;
+    static upsert<M extends AnyModel, TProps extends UpsertProps<M>>(userProps: TProps): SessionBoundModel<M, TProps>;
 
     /**
      * Gets the {@link Model} instance that matches properties in `lookupObj`.
@@ -187,7 +178,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * @throws {Error} If more than one entity matches the properties in `lookupObj`.
      * @return a {@link SessionBoundModel} instance that matches the properties in `lookupObj`.
      */
-    static get(lookupObj: LookupSpec<Model>): SessionBoundModel<Model> | null;
+    static get<M extends AnyModel, TProps extends LookupSpec<M>>(lookupObj: TProps): SessionBoundModel<M, TProps> | null;
 
     /**
      * Returns a {@link Model} instance for the object with id `id`.
@@ -198,7 +189,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * @param  id - the `id` of the object to get
      * @return a {@link SessionBoundModel} instance with id `id`
      */
-    static withId(id: IdType<Model>): SessionBoundModel<Model> | null;
+    static withId<M extends AnyModel>(id: IdType<M>): SessionBoundModel<M> | null;
 
     /**
      * Returns a boolean indicating if an entity
@@ -209,7 +200,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      *
      * @since 0.11.0
      */
-    static idExists(id: IdType<Model>): boolean;
+    static idExists(id: string | number): boolean;
 
     /**
      * @return A string representation of this {@link Model} class.
@@ -242,22 +233,22 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
     /**
      * @see {@link QuerySet.all}
      */
-    static all(): QuerySet;
+    static all<M extends AnyModel>(this: ModelType<M>): QuerySet<M>;
 
     /**
      * @see {@link QuerySet.at}
      */
-    static at(index: number): SessionBoundModel<Model> | undefined;
+    static at(index: number): SessionBoundModel | undefined;
 
     /**
      * @see {@link QuerySet.first}
      */
-    static first(): SessionBoundModel<Model> | undefined;
+    static first(): SessionBoundModel | undefined;
 
     /**
      * @see {@link QuerySet.last}
      */
-    static last(): SessionBoundModel<Model> | undefined;
+    static last(): SessionBoundModel | undefined;
 
     /**
      * @see {@link QuerySet.update}
@@ -334,7 +325,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * @param  propertyName - name of the property to set
      * @param value - value assigned to the property
      */
-    set<K extends string>(propertyName: K, value: RefPropOrSimple<this, K>): void;
+    set<K extends string>(propertyName: K, value: RefPropOrSimple<InstanceType<MClass>, K>): void;
 
     /**
      * Assigns multiple fields and corresponding values to this {@link Model} instance.
@@ -342,7 +333,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      *
      * @param userMergeObj - an object that will be merged with this instance.
      */
-    update(userMergeObj: UpdateProps<this>): void;
+    update(userMergeObj: UpdateProps<InstanceType<MClass>>): void;
 
     /**
      * Updates {@link Model} instance attributes to reflect the
@@ -383,22 +374,17 @@ export type UpdateProps<M extends Model> = Omit<UpsertProps<M>, IdKey<M>>;
 /**
  * @internal
  */
-export type CustomInstanceProps<M extends AnyModel, Props extends object> = {
-    [K in keyof Props]: {
-        [P in K]: P extends keyof ModelFields<M>
-                  ? SessionBoundModelField<M, P>
-                  : Props[P] extends Serializable
-                    ? Props[P]
-                    : never
-    }[K]
-};
+export type CustomInstanceProps<M extends AnyModel, Props extends object> = PickByValue<
+    Omit<Props, Extract<keyof Props, keyof ModelFields<M>>>,
+    Serializable
+>;
 
 /**
  * Model id property key extraction helper.
  *
  * Falls back to `'id'` if not specified explicitly via {@link Model.options}.
  */
-export type IdKey<M extends Model> = IdAttribute<ModelClass<M>>;
+export type IdKey<M extends AnyModel> = IdAttribute<ModelClass<M>>;
 
 /**
  * Model id property type extraction helper.
@@ -406,12 +392,12 @@ export type IdKey<M extends Model> = IdAttribute<ModelClass<M>>;
  * Falls back to `number` if not specified explicitly via {@link Model.options}.
  */
 export type IdType<M extends Model> = IdKey<M> extends infer U
-                                      ? U extends keyof ModelFields<M>
-                                        ? ModelFields<M>[U] extends string | number
-                                          ? ModelFields<M>[U]
-                                          : never
-                                        : number
-                                      : number;
+    ? U extends keyof ModelFields<M>
+        ? ModelFields<M>[U] extends string | number
+            ? ModelFields<M>[U]
+            : never
+        : number
+    : number;
 
 /**
  * A single entry map representing IdKey: IdType property of supplied {@link Model}.
@@ -432,8 +418,8 @@ export type Ref<M extends Model> = {
  * - any serializable value - if propertyName is not among declared Model fields
  */
 export type RefPropOrSimple<M extends Model, K extends string> = K extends keyof RefFields<M>
-                                                                 ? M['ref'][K]
-                                                                 : Serializable | Serializable[];
+    ? Ref<M>[K]
+    : Serializable;
 
 /**
  * A Model-derived mapped type, representing model instance bound to a session.
@@ -442,9 +428,9 @@ export type RefPropOrSimple<M extends Model, K extends string> = K extends keyof
  * Custom type-checked properties are available on `SessionBoundModel` instances created using
  * @link Model#create} or {@link Model#upsert} calls.
  */
-export type SessionBoundModel<M extends Model = any, InstanceProps extends SerializableMap = {}> = M &
-                                                                                                   InstanceProps &
-                                                                                                   { [K in keyof ModelFields<M>]: SessionBoundModelField<M, K> };
+export type SessionBoundModel<M extends Model = any, InstanceProps extends object = {}> = M &
+    { [K in keyof ModelFields<M>]: SessionBoundModelField<M, K> } &
+    CustomInstanceProps<M, InstanceProps>;
 
 /**
  * Static side of a particular {@link Model} with member signatures narrowed to provided {@link Model} type
@@ -453,7 +439,15 @@ export type SessionBoundModel<M extends Model = any, InstanceProps extends Seria
  *
  * @inheritDoc
  */
-export interface ModelType<M extends Model> extends QuerySet<M> {
+export interface ModelType<M extends AnyModel> extends QuerySet<M> {
+    new (props: ModelFields<M>): SessionBoundModel<M>;
+
+    options: ModelTableOpts<ModelClass<M>>;
+
+    modelName: ModelClass<M>['modelName'];
+
+    fields: ModelClass<M>['fields'];
+
     /**
      * @see {@link Model#idExists}
      */
@@ -467,52 +461,54 @@ export interface ModelType<M extends Model> extends QuerySet<M> {
     /**
      * @see {@link Model#get}
      */
-    get<TLookup extends LookupSpec<M>>(
-        lookupSpec: TLookup
-    ): SessionBoundModel<M, CustomInstanceProps<M, TLookup>> | null;
+    get<TLookup extends LookupSpec<M>>(lookupSpec: TLookup): SessionBoundModel<M, TLookup> | null;
 
     /**
      * @see {@link Model#create}
      */
-    create<TProps extends CreateProps<M>>(props: TProps): SessionBoundModel<M, CustomInstanceProps<M, TProps>>;
+    create<TProps extends CreateProps<M>>(props: TProps): SessionBoundModel<M, TProps>;
 
     /**
      * @see {@link Model#upsert}
      */
-    upsert<TProps extends UpsertProps<M>>(props: TProps): SessionBoundModel<M, CustomInstanceProps<M, TProps>>;
+    upsert<TProps extends UpsertProps<M>>(props: TProps): SessionBoundModel<M, TProps>;
 }
 
 /**
  * @internal
  */
-export type ModelClass<M extends Model> = ReturnType<M['getClass']>;
+export type ModelClass<M extends AnyModel> = ReturnType<M['getClass']>;
 
 /**
  * @internal
  */
-export type ModelFields<M extends Model> = M['__$infer$__'];
+export type ModelFields<M extends Model> = [ConstructorParameters<ModelClass<M>>] extends [[infer U]]
+    ? U extends ModelFieldMap
+        ? U
+        : never
+    : never;
 
 /**
  * @internal
  */
-export type FieldSpecKeys<M extends Model, TField> = keyof PickByValue<ModelClass<M>['fields'], TField>;
+export type FieldSpecKeys<M extends AnyModel, TField> = keyof PickByValue<ModelClass<M>['fields'], TField>;
 
 /**
  * @internal
  */
-export type RefFields<M extends Model> = Pick<
+export type RefFields<M extends AnyModel, K extends keyof ModelFields<M> = keyof ModelFields<M>> = Omit<
     ModelFields<M>,
-    Extract<keyof ModelFields<M>, FieldSpecKeys<M, Attribute | OneToOne | ForeignKey>>
-    >;
+    Extract<K, FieldSpecKeys<M, ManyToMany>>
+>;
 
 /**
  * @internal
  */
-export type SessionBoundModelField<M extends Model, K extends keyof ModelFields<M>> = Required<
-    ModelFields<M>
-    >[K] extends Model
-                                                                                      ? SessionBoundModel<ModelFields<M>[K]>
-                                                                                      : ModelFields<M>[K];
+export type SessionBoundModelField<M extends AnyModel, K extends keyof ModelFields<M>> = ModelFields<
+    M
+>[K] extends AnyModel
+    ? SessionBoundModel<ModelFields<M>[K]>
+    : ModelFields<M>[K];
 
 /**
  * {@link Model#create} argument type
@@ -524,24 +520,24 @@ export type SessionBoundModelField<M extends Model, K extends keyof ModelFields<
 export type CreateProps<
     M extends AnyModel,
     RFields extends Required<ModelFields<M>> = Required<ModelFields<M>>
-    > = Optional<
+> = Optional<
     {
         [K in keyof ModelFields<M>]: {
-        [P in K]: RFields[P] extends MutableQuerySet<infer RM>
-                  ? ReadonlyArray<IdOrModelLike<RM>>
-                  : RFields[P] extends AnyModel
-                    ? (P extends FieldSpecKeys<M, OneToOne | ForeignKey> ? IdOrModelLike<RFields[P]> : never)
-                    : RFields[P] extends QuerySet
+            [P in K]: RFields[P] extends MutableQuerySet<infer RM>
+                ? ReadonlyArray<IdOrModelLike<RM>>
+                : (RFields[P] extends QuerySet
                       ? never
-                      : RFields[P]
-    }[K]
+                      : RFields[P] extends AnyModel
+                      ? (P extends FieldSpecKeys<M, OneToOne | ForeignKey> ? IdOrModelLike<RFields[P]> : never)
+                      : RFields[P])
+        }[K]
     },
     OptionalCreatePropsKeys<M>
-    >;
+>;
 
 /**
  * @internal
  */
-export type OptionalCreatePropsKeys<M extends AnyModel> = IdType<M> extends number
-                                                          ? IdKey<M> | OptionalKeys<ModelFields<M>> | FieldSpecKeys<M, AttributeWithDefault>
-                                                          : OptionalKeys<ModelFields<M>> | FieldSpecKeys<M, AttributeWithDefault>;
+export type OptionalCreatePropsKeys<M extends Model> = IdType<M> extends number
+    ? (IdKey<M> | OptionalKeys<ModelFields<M>> | FieldSpecKeys<M, AttributeWithDefault>)
+    : (OptionalKeys<ModelFields<M>> | FieldSpecKeys<M, AttributeWithDefault>);

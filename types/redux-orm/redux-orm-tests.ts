@@ -11,8 +11,7 @@ import {
     ORM,
     OrmState,
     QuerySet,
-    Ref,
-    Session
+    Ref
 } from 'redux-orm';
 
 interface CreateBookAction {
@@ -183,10 +182,10 @@ const argPropertyTypeRestrictionsOnCreate = () => {
     Book.create({ title: 'B1', publisher: publisherModel, authors: [authorModel] });
     Book.create({ title: 'B1', publisher: publisherModel.ref, authors: [authorModel.ref] });
     Book.create({
-                    title: 'B1',
-                    publisher: { index: publisherModel.index },
-                    authors: [{ id: authorModel.id }, 'A1', authorModel, authorModel.ref]
-                });
+        title: 'B1',
+        publisher: { index: publisherModel.index },
+        authors: [{ id: authorModel.id }, 'A1', authorModel, authorModel.ref]
+    });
 
     /** Id types are verified to match relation target */
     Book.create({ title: 'B1', publisher: authorModel }); // $ExpectError
@@ -202,7 +201,7 @@ const argPropertyTypeRestrictionsOnUpsert = () => {
     /** Upsert requires id to be provided */
     Book.upsert({ publisher: 1 }); // $ExpectError
 
-    // $ExpectType SessionBoundModel<Book, CustomInstanceProps<Book, { title: string; publisher: number; }>>
+    // $ExpectType SessionBoundModel<Book, { title: string; publisher: number; }>
     Book.upsert({ title: 'B1', publisher: 1 });
 
     /* Incompatible property types: */
@@ -227,10 +226,10 @@ const argPropertyTypeRestrictionsOnUpsert = () => {
     Book.upsert({ title: 'B1', publisher: publisherModel, authors: [authorModel] });
     Book.upsert({ title: 'B1', publisher: publisherModel.ref, authors: [authorModel.ref] });
     Book.upsert({
-                    title: 'B1',
-                    publisher: { index: publisherModel.index },
-                    authors: [{ id: authorModel.id }, 'A1', authorModel, authorModel.ref]
-                });
+        title: 'B1',
+        publisher: { index: publisherModel.index },
+        authors: [{ id: authorModel.id }, 'A1', authorModel, authorModel.ref]
+    });
 
     /** Id types are verified to match relation target */
     Book.create({ title: 'B1', publisher: authorModel }); // $ExpectError
@@ -288,10 +287,10 @@ const customInstanceProperties = () => {
     const customProp = { foo: 0, bar: true };
 
     const extendedBook = Book.create({
-                                         title: 'extendedBook',
-                                         publisher: 1,
-                                         customProp
-                                     });
+        title: 'extendedBook',
+        publisher: 1,
+        customProp
+    });
 
     type customBookKeys = Exclude<keyof typeof extendedBook, keyof Model>; // $ExpectType "title" | "coverArt" | "publisher" | "authors" | "customProp"
     const extendedBookTitle = extendedBook.title; // $ExpectType string

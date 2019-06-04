@@ -5,7 +5,6 @@ import Model, {
     IdOrModelLike,
     ModelClass,
     Ref,
-    SerializableMap,
     SessionBoundModel,
     UpdateProps
 } from './Model';
@@ -56,7 +55,7 @@ export type LookupSpec<M extends Model> = LookupProps<M> | LookupPredicate<M>;
  */
 export type LookupResult<M extends Model, TLookup extends LookupSpec<M>> = TLookup extends LookupPredicate<M>
     ? QuerySet<M>
-    : QuerySet<M, CustomInstanceProps<M, TLookup>>;
+    : QuerySet<M, CustomInstanceProps<M, LookupProps<M>>>;
 
 /**
  * <p>
@@ -84,7 +83,7 @@ export type LookupResult<M extends Model, TLookup extends LookupSpec<M>> = TLook
  * @template M type of {@link Model} instances returned by QuerySet's methods.
  * @template InstanceProps additional properties available on QuerySet's elements.
  */
-export default class QuerySet<M extends AnyModel = any, InstanceProps extends SerializableMap = {}> {
+export default class QuerySet<M extends AnyModel = any, InstanceProps extends object = {}> {
     /**
      * Creates a `QuerySet`. The constructor is mainly for internal use;
      * Access QuerySet instances from {@link Model}.
@@ -251,7 +250,7 @@ export default class QuerySet<M extends AnyModel = any, InstanceProps extends Se
 /**
  * {@link QuerySet} extensions available on {@link ManyToMany} fields of session bound {@link Model} instances.
  */
-export interface ManyToManyExtensions<M extends Model> {
+export interface ManyToManyExtensions<M extends AnyModel> {
     add: (...entitiesToAdd: ReadonlyArray<IdOrModelLike<M>>) => void;
     remove: (...entitiesToRemove: ReadonlyArray<IdOrModelLike<M>>) => void;
     clear: () => void;
@@ -260,6 +259,6 @@ export interface ManyToManyExtensions<M extends Model> {
 /**
  * A {@link QuerySet} extended with {@link ManyToMany} specific functionality - {@link ManyToManyExtensions}.
  */
-export interface MutableQuerySet<M extends AnyModel = any, InstanceProps extends SerializableMap = {}>
-    extends QuerySet<M, InstanceProps>,
-        ManyToManyExtensions<M> {}
+export interface MutableQuerySet<M extends AnyModel = any, InstanceProps extends object = {}>
+    extends ManyToManyExtensions<M>,
+        QuerySet<M, InstanceProps> {}

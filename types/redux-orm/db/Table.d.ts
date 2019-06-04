@@ -31,15 +31,19 @@ export interface TableOpts {
 /**
  * @internal
  */
-export type ExtractModelOption<MClass extends typeof AnyModel, K extends keyof TableOpts, DefaultValue extends string> = MClass['options'] extends () => { [P in K]: infer R }
+export type ExtractModelOption<
+    MClass extends typeof AnyModel,
+    K extends keyof TableOpts,
+    DefaultValue extends string
+> = MClass['options'] extends () => { [P in K]: infer R }
     ? R extends string
-                ? R
-                : DefaultValue
-: MClass['options'] extends { [P in K]: infer R }
+        ? R
+        : DefaultValue
+    : MClass['options'] extends { [P in K]: infer R }
     ? R extends string
-                ? R
-                : DefaultValue
-: DefaultValue;
+        ? R
+        : DefaultValue
+    : DefaultValue;
 
 /**
  * Model idAttribute option extraction helper.
@@ -114,9 +118,7 @@ export type TableIndexes<MClass extends typeof AnyModel> = {
 export type TableState<MClass extends typeof AnyModel> = {
     readonly meta: DefaultMeta<IdType<InstanceType<MClass>>>;
     readonly indexes: TableIndexes<MClass>;
-} & {
-    readonly [K in ArrName<MClass>]: ReadonlyArray<IdType<InstanceType<MClass>>>
-} &
+} & { readonly [K in ArrName<MClass>]: ReadonlyArray<IdType<InstanceType<MClass>>> } &
     {
         readonly [K in MapName<MClass>]: {
             readonly [K: string]: Ref<InstanceType<MClass>>;
