@@ -1,14 +1,13 @@
 import Model, { AnyModel, FieldSpecKeys, IdType, Ref } from '../Model';
 import { ForeignKey, OneToOne, TableOpts } from '../index';
 import { Field } from '../fields';
-import { Assign } from '../helpers';
 
 /**
  * {@link TableOpts} used for {@link Table} customization.
  *
  * Supplied via {@link Model#options}.
  *
- * If no customizations were provided, the table uses {@link DefaultTableOpts}:
+ * If no customizations were provided, the table uses following default options:
  * <br/>
  * ```typescript
  *  {
@@ -30,43 +29,55 @@ export interface TableOpts {
 }
 
 /**
- * Default {@link TableOpts}.
+ * @internal
  */
-export interface DefaultTableOpts {
-    readonly idAttribute: 'id';
-    readonly arrName: 'items';
-    readonly mapName: 'itemsById';
-    readonly fields: {};
-}
+export type ExtractModelOption<MClass extends typeof AnyModel, K extends keyof TableOpts, DefaultValue extends string> = MClass['options'] extends () => { [P in K]: infer R }
+    ? R extends string
+                ? R
+                : DefaultValue
+: MClass['options'] extends { [P in K]: infer R }
+    ? R extends string
+                ? R
+                : DefaultValue
+: DefaultValue;
+
+/**
+ * Model idAttribute option extraction helper.
+ *
+ * Falls back to `'id'` if not specified explicitly via {@link Model.options}.
+ */
+export type IdAttribute<MClass extends typeof AnyModel> = ExtractModelOption<MClass, 'idAttribute', 'id'>;
+
+/**
+ * Model arrName option extraction helper.
+ *
+ * Falls back to `'items'` if not specified explicitly via {@link Model.options}.
+ */
+export type ArrName<MClass extends typeof AnyModel> = ExtractModelOption<MClass, 'arrName', 'items'>;
+
+/**
+ * Model mapName option extraction helper.
+ *
+ * Falls back to `'itemsById'` if not specified explicitly via {@link Model.options}.
+ */
+export type MapName<MClass extends typeof AnyModel> = ExtractModelOption<MClass, 'mapName', 'itemsById'>;
 
 /**
  * Unbox {@link Model#options} or fallback to default for others.
  *
  * @internal
  */
-export type ExtractModelOptions<MClass extends typeof AnyModel> = MClass['options'] extends () => TableOpts
-    ? ReturnType<MClass['options']>
-    : MClass['options'] extends TableOpts
-    ? MClass['options']
-    : TableOpts;
-
-/**
- * {@link TableOpts} specific for {@link Model} class provided.
- */
-export interface ModelTableOpts<
-    MClass extends typeof AnyModel,
-    MOpts extends ExtractModelOptions<MClass> = ExtractModelOptions<MClass>
-> extends TableOpts {
-    readonly idAttribute: MOpts['idAttribute'];
-    readonly arrName: MOpts['arrName'];
-    readonly mapName: MOpts['mapName'];
+export interface ModelTableOpts<MClass extends typeof AnyModel> {
+    readonly idAttribute: IdAttribute<MClass>;
+    readonly arrName: ArrName<MClass>;
+    readonly mapName: MapName<MClass>;
     readonly fields: MClass['fields'];
 }
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
  */
-export class Table<MClass extends typeof AnyModel, TOpts extends ModelTableOpts<MClass> = ModelTableOpts<MClass>> {
+export class Table<MClass extends typeof AnyModel> {
     /**
      * Creates a new {@link Table} instance.
      *
@@ -79,7 +90,7 @@ export class Table<MClass extends typeof AnyModel, TOpts extends ModelTableOpts<
      *                                                 map.
      * @param   [userOpts.fields=DefaultTableOpts.fields] - mapping of field key to {@link Field} object
      */
-    constructor(userOpts?: TOpts);
+    constructor(userOpts?: ModelTableOpts<MClass>);
 
     getEmptyState(): TableState<MClass>;
 }
@@ -87,8 +98,8 @@ export class Table<MClass extends typeof AnyModel, TOpts extends ModelTableOpts<
 /**
  * Type of {@link Model} state's branch `meta` field.
  */
-export interface DefaultMeta<M extends AnyModel> {
-    maxId: IdType<M> extends number ? number : null | number;
+export interface DefaultMeta<MIdType> {
+    maxId: MIdType extends number ? number : null | number;
 }
 
 export type TableIndexes<MClass extends typeof AnyModel> = {
@@ -101,15 +112,13 @@ export type TableIndexes<MClass extends typeof AnyModel> = {
  * Infers actual state of the ORM branch based on the {@link Model} class provided.
  */
 export type TableState<MClass extends typeof AnyModel> = {
-    readonly meta: DefaultMeta<InstanceType<MClass>>;
+    readonly meta: DefaultMeta<IdType<InstanceType<MClass>>>;
     readonly indexes: TableIndexes<MClass>;
 } & {
-    readonly [K in Assign<ModelTableOpts<MClass>, DefaultTableOpts>['arrName']]: ReadonlyArray<
-        IdType<InstanceType<MClass>>
-    >
+    readonly [K in ArrName<MClass>]: ReadonlyArray<IdType<InstanceType<MClass>>>
 } &
     {
-        readonly [K in Assign<ModelTableOpts<MClass>, DefaultTableOpts>['mapName']]: {
+        readonly [K in MapName<MClass>]: {
             readonly [K: string]: Ref<InstanceType<MClass>>;
         }
     };

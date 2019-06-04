@@ -5,11 +5,9 @@
 export type Assign<T extends object, U extends object, I = Diff<T, U> & Intersection<U, T> & Diff<U, T>> = Pick<
     I,
     keyof I
->;
+    >;
 
 export type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
-
-export type OmitByValue<T, ValueType> = Pick<T, { [Key in keyof T]: T[Key] extends ValueType ? never : Key }[keyof T]>;
 
 export type Diff<T extends object, U extends object> = Pick<T, Exclude<keyof T, keyof U>>;
 
@@ -22,6 +20,6 @@ export type Optional<T extends object, K extends keyof T = keyof T> = Omit<T, K>
 export type Intersection<T extends object, U extends object> = Pick<
     T,
     Extract<keyof T, keyof U> & Extract<keyof U, keyof T>
->;
+    >;
 
 export type OptionalKeys<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? K : never }[keyof T];

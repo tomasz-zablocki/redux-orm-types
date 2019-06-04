@@ -1,5 +1,7 @@
 import { IndexedModelClasses, ORM, OrmState } from './ORM';
 import { Database, QueryResult, QuerySpec, UpdateSpec } from './db';
+import { Assign } from './helpers';
+import { ModelType } from './Model';
 
 export type BatchToken = any;
 
@@ -9,7 +11,7 @@ export default class Session<I extends IndexedModelClasses<any>> {
      *
      * @see {@link ModelType}
      */
-    readonly sessionBoundModels: ReadonlyArray<I[keyof I]>;
+    readonly sessionBoundModels: ReadonlyArray<ModelType<InstanceType<I[keyof I]>>>;
 
     /**
      * Current {@link OrmState}, specific to registered schema
@@ -57,3 +59,14 @@ export default class Session<I extends IndexedModelClasses<any>> {
      */
     applyUpdate<P>(update: UpdateSpec<P>): P;
 }
+
+/**
+ * An {@link ORM}-bound {@link Session} instance, extended with a set of {@link ModelType} properties.
+ *
+ * Extension is a map of {@link ModelType} accessible under keys within a set of {@link Model#modelName} values
+ * for registered {@link Model} classes.
+ */
+export type OrmSession<I extends IndexedModelClasses<any>> = Assign<
+    Session<I>,
+    { [K in keyof I]: ModelType<InstanceType<I[K]>> }
+>;

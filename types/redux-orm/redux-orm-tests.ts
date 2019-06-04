@@ -1,6 +1,6 @@
 import {
     attr,
-    createSelector as createSelectorORM,
+    createSelector as createOrmSelector,
     fk,
     IdKey,
     IdType,
@@ -9,8 +9,10 @@ import {
     ModelType,
     MutableQuerySet,
     ORM,
+    OrmState,
     QuerySet,
-    Ref
+    Ref,
+    Session
 } from 'redux-orm';
 
 interface CreateBookAction {
@@ -107,10 +109,13 @@ class Publisher extends Model<typeof Publisher, PublisherFields> {
     };
 }
 
+const schema = { Book, Authorship, Person, Publisher };
+
+type Schema = typeof schema;
+
 // create ORM instance and register { Book, Publisher, Person, Authorship } schema
 const ormFixture = () => {
-    const schema = { Book, Authorship, Person, Publisher };
-    const orm = new ORM<typeof schema>();
+    const orm = new ORM<Schema>();
     orm.register(Book, Authorship, Person, Publisher);
     return orm;
 };
@@ -178,10 +183,10 @@ const argPropertyTypeRestrictionsOnCreate = () => {
     Book.create({ title: 'B1', publisher: publisherModel, authors: [authorModel] });
     Book.create({ title: 'B1', publisher: publisherModel.ref, authors: [authorModel.ref] });
     Book.create({
-        title: 'B1',
-        publisher: { index: publisherModel.index },
-        authors: [{ id: authorModel.id }, 'A1', authorModel, authorModel.ref]
-    });
+                    title: 'B1',
+                    publisher: { index: publisherModel.index },
+                    authors: [{ id: authorModel.id }, 'A1', authorModel, authorModel.ref]
+                });
 
     /** Id types are verified to match relation target */
     Book.create({ title: 'B1', publisher: authorModel }); // $ExpectError
@@ -222,10 +227,10 @@ const argPropertyTypeRestrictionsOnUpsert = () => {
     Book.upsert({ title: 'B1', publisher: publisherModel, authors: [authorModel] });
     Book.upsert({ title: 'B1', publisher: publisherModel.ref, authors: [authorModel.ref] });
     Book.upsert({
-        title: 'B1',
-        publisher: { index: publisherModel.index },
-        authors: [{ id: authorModel.id }, 'A1', authorModel, authorModel.ref]
-    });
+                    title: 'B1',
+                    publisher: { index: publisherModel.index },
+                    authors: [{ id: authorModel.id }, 'A1', authorModel, authorModel.ref]
+                });
 
     /** Id types are verified to match relation target */
     Book.create({ title: 'B1', publisher: authorModel }); // $ExpectError
@@ -253,9 +258,7 @@ const inferOrmBranchEmptyState = () => {
 
 // indexing session instance using registered Model.modelName returns narrowed Model class
 const sessionInstanceExtendedWithNarrowedModelClasses = () => {
-    const orm = ormFixture();
-
-    const { Book, Person, Publisher } = orm.session(orm.getEmptyState());
+    const { Book, Person, Publisher } = sessionFixture();
 
     // $ExpectType { Book: ModelType<Book>; Person: ModelType<Person>; Publisher: ModelType<Publisher>; }
     const sessionBoundModels = { Book, Person, Publisher };
@@ -273,9 +276,9 @@ const idInferenceAndCustomizations = () => {
 
 // Model#create result retains custom properties supplied during call
 const customInstanceProperties = () => {
-    const session = sessionFixture();
+    const { Book } = sessionFixture();
 
-    const basicBook = session.Book.create({ title: 'book', publisher: 1 });
+    const basicBook = Book.create({ title: 'book', publisher: 1 });
 
     type basicBookKeys = Exclude<keyof typeof basicBook, keyof Model>; // $ExpectType "title" | "coverArt" | "publisher" | "authors"
     const basicBookTitle = basicBook.title; // $ExpectType string
@@ -284,11 +287,11 @@ const customInstanceProperties = () => {
 
     const customProp = { foo: 0, bar: true };
 
-    const extendedBook = session.Book.create({
-        title: 'extendedBook',
-        publisher: 1,
-        customProp
-    });
+    const extendedBook = Book.create({
+                                         title: 'extendedBook',
+                                         publisher: 1,
+                                         customProp
+                                     });
 
     type customBookKeys = Exclude<keyof typeof extendedBook, keyof Model>; // $ExpectType "title" | "coverArt" | "publisher" | "authors" | "customProp"
     const extendedBookTitle = extendedBook.title; // $ExpectType string
@@ -298,9 +301,8 @@ const customInstanceProperties = () => {
 // reducer API is intact
 const standaloneReducerFunction = () => {
     const orm = ormFixture();
-    type OrmType = typeof orm;
 
-    type StateType = ReturnType<OrmType['getEmptyState']>;
+    type StateType = OrmState<Schema>;
 
     const reducerAddItem = (state: StateType, action: CreateBookAction): StateType => {
         const session = orm.session(state);
@@ -313,8 +315,8 @@ const standaloneReducerFunction = () => {
 // Orders are optional, must conform to SortOrder type when present.
 // QuerySet.orderBy overloads accept iteratees applicable to QuerySet's type only
 const orderByArguments = () => {
-    const session = sessionFixture();
-    const booksQuerySet = session.Book.all();
+    const { Book } = sessionFixture();
+    const booksQuerySet = Book.all();
 
     // $ExpectType readonly Ref<Book>[]
     const singleIteratee = booksQuerySet
@@ -346,33 +348,28 @@ const orderByArguments = () => {
 
 const selectors = () => {
     // test fixture, use reselect.createSelector in production code
-    const createSelector = <S, P1, R>(
-        param1Creator: (state: S) => P1,
-        combiner: (param1: P1) => R
-    ): ((state: S) => R) => state => combiner(param1Creator(state));
+    const createSelector = <S, OS extends OrmState<any>, Result extends any>(
+        param1Creator: (state: S) => OS,
+        combiner: (param1: OS) => Result
+    ): ((state: S) => Result) => state => combiner(param1Creator(state));
 
-    const schema = { Book, Authorship, Person, Publisher };
-    type SchemaType = typeof schema;
-    const orm = new ORM<SchemaType>();
-    orm.register(Book, Authorship, Person, Publisher);
-    type OrmType = typeof orm;
-    type StateType = ReturnType<OrmType['getEmptyState']>;
+    const orm = ormFixture();
+
+    const ormSelector = createOrmSelector(orm, session => session.Book.all().toRefArray()[0]);
 
     interface RootState {
-        ormBranch: StateType;
+        db: OrmState<Schema>;
     }
 
-    const ormSelector = createSelectorORM<SchemaType, Ref<Book>>(orm, session => session.Book.all().toRefArray()[0]);
-
-    const invalidResultSelector = createSelector<RootState, StateType, Ref<Person>>(
-        ({ ormBranch }) => ormBranch,
-        ormSelector // $ExpectError
-    );
-
-    const selector = createSelector<RootState, StateType, Ref<Book>>(
-        ({ ormBranch }) => ormBranch,
+    const selector = createSelector<RootState, OrmState<Schema>, Ref<Book>>(
+        ({ db }) => db,
         ormSelector
     );
 
-    const selected = selector({ ormBranch: orm.getEmptyState() }); // $ExpectType Ref<Book>
+    createSelector<RootState, OrmState<Schema>, Ref<Person>>(
+        ({ db }) => db,
+        ormSelector // $ExpectError
+    );
+
+    selector({ db: orm.getEmptyState() }); // $ExpectType Ref<Book>
 };

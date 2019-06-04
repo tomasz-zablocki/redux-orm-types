@@ -1,9 +1,11 @@
 import { TableOpts } from './db';
+import { IdAttribute } from './db/Table';
 import { Attribute, AttributeWithDefault, FieldSpecMap, ForeignKey, OneToOne } from './fields';
 import { Omit, Optional, OptionalKeys, Overwrite, PickByValue } from './helpers';
 import { IdOrModelLike, ModelField } from './index';
-import { SessionType } from './ORM';
 import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
+import { OrmSession } from './Session';
+
 /**
  * A primitive value
  */
@@ -144,10 +146,11 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * @see {@link createReducer}
      *
      * @param action  - store-dispatched action instance
-     * @param modelType - a {@link ModelType} parametrized with this Model's instance
+     * @param modelType - a {@link ModelType} parametrized with a
+     *                      {@link Model} type that the reducer is being attached to.
      * @param session - an optional parameter, can be used for querying other Models (mutations are not supported)
      */
-    static reducer(action: any, modelType: ModelType<any>, session: SessionType<any>): void;
+    static reducer(action: any, modelType: ModelType<any>, session: OrmSession<any>): void;
 
     /**
      * Creates a new record in the database, instantiates a {@link Model} and returns it.
@@ -156,9 +159,9 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * model as well.
      *
      * @param  userProps - the new {@link Model}'s properties.
-     * @return a new {@link Model} instance.
+     * @return a new {@link SessionBoundModel} instance.
      */
-    static create(userProps: CreateProps<Model>): SessionBoundModel<Model>;
+    static create<TProps extends CreateProps<Model>>(userProps: TProps): SessionBoundModel<Model, CustomInstanceProps<Model, TProps>>;
 
     /**
      * Creates a new or update existing record in the database, instantiates a {@link Model} and returns it.
@@ -166,10 +169,10 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * If you pass values for many-to-many fields, instances are created on the through
      * model as well.
      *
-     * @param  userProps - the required {@link Model}'s properties.
-     * @return a {@link Model} instance.
+     * @param  userProps - the upserted {@link Model}'s properties.
+     * @return a {@link SessionBoundModel} instance.
      */
-    static upsert(userProps: UpsertProps<Model>): SessionBoundModel<Model>;
+    static upsert<TProps extends UpsertProps<Model>>(userProps: TProps): SessionBoundModel<Model, CustomInstanceProps<Model, TProps>>;
 
     /**
      * Gets the {@link Model} instance that matches properties in `lookupObj`.
@@ -178,7 +181,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      *
      * @param  lookupObj - the properties used to match a single entity.
      * @throws {Error} If more than one entity matches the properties in `lookupObj`.
-     * @return a {@link Model} instance that matches the properties in `lookupObj`.
+     * @return a {@link SessionBoundModel} instance that matches the properties in `lookupObj`.
      */
     static get(lookupObj: LookupSpec<Model>): SessionBoundModel<Model> | null;
 
@@ -189,7 +192,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * You can use {@link Model#idExists} to check for existence instead.
      *
      * @param  id - the `id` of the object to get
-     * @return a {@link Model} instance with id `id`
+     * @return a {@link SessionBoundModel} instance with id `id`
      */
     static withId(id: IdType<Model>): SessionBoundModel<Model> | null;
 
@@ -391,15 +394,7 @@ export type CustomInstanceProps<M extends AnyModel, Props extends object> = {
  *
  * Falls back to `'id'` if not specified explicitly via {@link Model.options}.
  */
-export type IdKey<M extends Model> = ModelClass<M>['options'] extends () => { idAttribute: infer R }
-    ? R extends string
-        ? R
-        : 'id'
-    : ModelClass<M>['options'] extends { idAttribute: infer R }
-    ? R extends string
-        ? R
-        : 'id'
-    : 'id';
+export type IdKey<M extends Model> = IdAttribute<ModelClass<M>>;
 
 /**
  * Model id property type extraction helper.
@@ -408,7 +403,7 @@ export type IdKey<M extends Model> = ModelClass<M>['options'] extends () => { id
  */
 export type IdType<M extends Model> = IdKey<M> extends infer U
     ? U extends keyof ModelFields<M>
-        ? ModelFields<M>[U] extends Primitive
+        ? ModelFields<M>[U] extends string|number
             ? ModelFields<M>[U]
             : never
         : number
@@ -565,9 +560,7 @@ export type RelatedModel<
     M extends AnyModel,
     K extends MutableQuerySetKeys<M> | QuerySetKeys<M> | ModelRelationKeys<M>,
     MFields extends Required<ModelFields<M>> = Required<ModelFields<M>>
-> = MFields[K] extends MutableQuerySet<infer RM, infer Props>
-    ? RM
-    : MFields[K] extends QuerySet<infer RM, infer Props>
+> = MFields[K] extends QuerySet<infer RM, infer Props>
     ? RM
     : MFields[K];
 

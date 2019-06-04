@@ -1,6 +1,6 @@
 import { Database, DatabaseCreator, TableState } from './db';
-import { AnyModel, ModelType } from './Model';
-import Session from './Session';
+import { AnyModel } from './Model';
+import Session, { OrmSession } from './Session';
 
 /**
  * A `{typeof Model[modelName]: typeof Model}` map defining:
@@ -18,15 +18,6 @@ export type IndexedModelClasses<
  * A mapped type capable of inferring ORM branch state type based on schema {@link Model}s.
  */
 export type OrmState<MClassMap extends IndexedModelClasses<any>> = { [K in keyof MClassMap]: TableState<MClassMap[K]> };
-
-/**
- * A mapped type providing inference of dynamic {@link Session} properties.
- *
- * When returned from {@link ORM.session} call, the {@link Session} instance
- * is extended with session bound Model classes, accessible at {@link Model#modelName} keys.
- */
-export type SessionType<I extends IndexedModelClasses<any>> = Session<I> &
-    { [K in keyof I]: ModelType<InstanceType<I[K]>> };
 
 /**
  * ORM instantiation opts.
@@ -97,7 +88,7 @@ export class ORM<I extends IndexedModelClasses<any>, ModelNames extends keyof I 
      *
      * @return a new {@link Session} instance
      */
-    session(state: OrmState<I>): SessionType<I>;
+    session(state: OrmState<I>): OrmSession<I>;
 
     /**
      * Begins an mutable database session.
@@ -109,7 +100,7 @@ export class ORM<I extends IndexedModelClasses<any>, ModelNames extends keyof I 
      *
      * @return a new {@link Session} instance
      */
-    mutableSession(state: OrmState<I>): SessionType<I>;
+    mutableSession(state: OrmState<I>): OrmSession<I>;
 
     /**
      * Acquire database reference.
