@@ -17,9 +17,7 @@ export type IndexedModelClasses<
 /**
  * A mapped type capable of inferring ORM branch state type based on schema {@link Model}s.
  */
-export type OrmState<MClassMap extends IndexedModelClasses<any>> = {
-    [K in keyof MClassMap]: TableState<MClassMap[K]>
-};
+export type OrmState<MClassMap extends IndexedModelClasses<any>> = { [K in keyof MClassMap]: TableState<MClassMap[K]> };
 
 /**
  * A mapped type providing inference of dynamic {@link Session} properties.

@@ -197,7 +197,7 @@ const argPropertyTypeRestrictionsOnUpsert = () => {
     /** Upsert requires id to be provided */
     Book.upsert({ publisher: 1 }); // $ExpectError
 
-    // $ExpectType SessionBoundModel<Book, CustomInstanceProps<Book, { title: string; publisher: number; }, Pick<{ title: string; publisher: number; }, never>>>
+    // $ExpectType SessionBoundModel<Book, CustomInstanceProps<Book, { title: string; publisher: number; }>>
     Book.upsert({ title: 'B1', publisher: 1 });
 
     /* Incompatible property types: */
@@ -245,7 +245,7 @@ const restrictRegisterArgsToSchemaModels = () => {
 const inferOrmBranchEmptyState = () => {
     const emptyState = ormFixture().getEmptyState();
 
-    const bookTableState = emptyState.Book; // $ExpectType TableState<typeof Book, DefaultMeta<Book>, "items", "itemsById", string>
+    const bookTableState = emptyState.Book; // $ExpectType TableState<typeof Book>
     const bookItemsById = emptyState.Book.itemsById; // $ExpectType { readonly [K: string]: Ref<Book>; }
     const authorshipMetaState = emptyState.Authorship.meta.maxId; // $ExpectType number
     const bookMetaState = emptyState.Book.meta.maxId; // $ExpectType number | null
@@ -278,16 +278,21 @@ const customInstanceProperties = () => {
     const basicBook = session.Book.create({ title: 'book', publisher: 1 });
 
     type basicBookKeys = Exclude<keyof typeof basicBook, keyof Model>; // $ExpectType "title" | "coverArt" | "publisher" | "authors"
+    const basicBookTitle = basicBook.title; // $ExpectType string
+    const authors = basicBook.authors; // $ExpectType MutableQuerySet<Person, {}> | undefined
     const unknownPropertyError = basicBook.customProp; // $ExpectError
+
+    const customProp = { foo: 0, bar: true };
 
     const extendedBook = session.Book.create({
         title: 'extendedBook',
         publisher: 1,
-        customProp: { foo: 0, bar: true }
+        customProp
     });
 
     type customBookKeys = Exclude<keyof typeof extendedBook, keyof Model>; // $ExpectType "title" | "coverArt" | "publisher" | "authors" | "customProp"
-    const customProp = extendedBook.customProp; // $ExpectType { foo: number; bar: boolean; }
+    const extendedBookTitle = extendedBook.title; // $ExpectType string
+    const instanceCustomProp = extendedBook.customProp; // $ExpectType { foo: number; bar: boolean; }
 };
 
 // reducer API is intact

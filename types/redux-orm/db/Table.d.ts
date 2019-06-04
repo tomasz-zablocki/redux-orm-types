@@ -100,14 +100,16 @@ export type TableIndexes<MClass extends typeof AnyModel> = {
  *
  * Infers actual state of the ORM branch based on the {@link Model} class provided.
  */
-export type TableState<
-    MClass extends typeof AnyModel,
-    MMeta extends object = DefaultMeta<InstanceType<MClass>>,
-    MArrName extends string = Assign<ModelTableOpts<MClass>, DefaultTableOpts>['arrName'],
-    MMapName extends string = Assign<ModelTableOpts<MClass>, DefaultTableOpts>['mapName'],
-    MIdType extends IdType<InstanceType<MClass>> = IdType<InstanceType<MClass>>
-> = {
-    meta: MMeta;
-    indexes: TableIndexes<MClass>;
-} & Record<MArrName, MIdType> &
-    Record<MMapName, { readonly [K: string]: Ref<InstanceType<MClass>> }>;
+export type TableState<MClass extends typeof AnyModel> = {
+    readonly meta: DefaultMeta<InstanceType<MClass>>;
+    readonly indexes: TableIndexes<MClass>;
+} & {
+    readonly [K in Assign<ModelTableOpts<MClass>, DefaultTableOpts>['arrName']]: ReadonlyArray<
+        IdType<InstanceType<MClass>>
+    >
+} &
+    {
+        readonly [K in Assign<ModelTableOpts<MClass>, DefaultTableOpts>['mapName']]: {
+            readonly [K: string]: Ref<InstanceType<MClass>>;
+        }
+    };

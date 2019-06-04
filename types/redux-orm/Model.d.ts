@@ -1,9 +1,9 @@
 import { TableOpts } from './db';
-import { AttributeWithDefault, FieldSpecMap, ForeignKey, ManyToMany, OneToOne } from './fields';
+import { Attribute, AttributeWithDefault, FieldSpecMap, ForeignKey, OneToOne } from './fields';
+import { Omit, Optional, OptionalKeys, Overwrite, PickByValue } from './helpers';
+import { IdOrModelLike, ModelField } from './index';
 import { SessionType } from './ORM';
 import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
-import { Omit, OmitByValue, Optional, OptionalKeys, Overwrite, PickByValue } from './helpers';
-import { IdOrModelLike, ModelField } from './index';
 /**
  * A primitive value
  */
@@ -51,7 +51,7 @@ export interface ModelFieldMap {
  * Either a primitive type matching Model's identifier type or a map containing an {IdAttribute: IdType} pair,
  * where IdAttribute and IdType match respective Model property key and type
  */
-export type IdOrModelLike<M extends Model> = IdType<M> | (IdEntry<M> & ModelFieldMap);
+export type IdOrModelLike<M extends Model> = IdType<M> | IdEntry<M>;
 
 /**
  * The heart of an ORM, the data model.
@@ -376,8 +376,14 @@ export type UpdateProps<M extends Model> = Omit<UpsertProps<M>, IdKey<M>>;
 /**
  * @internal
  */
-export type CustomInstanceProps<M extends Model, Props = object, ExtraProps = Omit<Props, keyof ModelFields<M>>> = {
-    [K in keyof ExtraProps]: { [P in K]: ExtraProps[P] extends Serializable ? ExtraProps[P] : never }[K]
+export type CustomInstanceProps<M extends AnyModel, Props extends object> = {
+    [K in keyof Props]: {
+        [P in K]: P extends keyof ModelFields<M>
+            ? SessionBoundModelField<M, P>
+            : Props[P] extends Serializable
+            ? Props[P]
+            : never
+    }[K]
 };
 
 /**
@@ -408,6 +414,9 @@ export type IdType<M extends Model> = IdKey<M> extends infer U
         : number
     : number;
 
+/**
+ * A single entry map representing IdKey: IdType property of supplied {@link Model}.
+ */
 export type IdEntry<M extends Model> = { [K in IdKey<M>]: IdType<M> };
 
 /**
@@ -435,8 +444,8 @@ export type RefPropOrSimple<M extends Model, K extends string> = K extends keyof
  * @link Model#create} or {@link Model#upsert} calls.
  */
 export type SessionBoundModel<M extends Model = any, InstanceProps extends SerializableMap = {}> = M &
-    SessionBoundModelFields<M> &
-    InstanceProps;
+    InstanceProps &
+    { [K in keyof ModelFields<M>]: SessionBoundModelField<M, K> };
 
 /**
  * Static side of a particular {@link Model} with member signatures narrowed to provided {@link Model} type
@@ -482,34 +491,27 @@ export type ModelClass<M extends Model> = ReturnType<M['getClass']>;
 /**
  * @internal
  */
-export type ExtractFieldSpecs<M extends Model> = ModelClass<M>['fields'];
-
-/**
- * @internal
- */
 export type ModelFields<M extends Model> = M['__$infer$__'];
 
 /**
  * @internal
  */
-export type FieldSpecKeys<M extends Model, TField> = keyof PickByValue<ExtractFieldSpecs<M>, TField>;
+export type FieldSpecKeys<M extends Model, TField> = keyof PickByValue<ModelClass<M>['fields'], TField>;
 
 /**
  * @internal
  */
 export type RefFields<M extends Model> = Pick<
     ModelFields<M>,
-    Extract<keyof ModelFields<M>, keyof OmitByValue<ExtractFieldSpecs<M>, ManyToMany>>
+    Extract<keyof ModelFields<M>, FieldSpecKeys<M, Attribute | OneToOne | ForeignKey>>
 >;
 
 /**
  * @internal
  */
-export type SessionBoundModelFields<M extends Model> = {
-    [K in keyof ModelFields<M>]: ModelFields<M>[K] extends AnyModel
-        ? SessionBoundModel<ModelFields<M>[K]>
-        : ModelFields<M>[K]
-};
+export type SessionBoundModelField<M extends Model, K extends keyof ModelFields<M>> = K extends ModelRelationKeys<M>
+    ? SessionBoundModel<ModelFields<M>[K]>
+    : ModelFields<M>[K];
 
 /**
  * {@link Model#create} argument type
@@ -518,20 +520,15 @@ export type SessionBoundModelFields<M extends Model> = {
  * @see {@link IdOrModelLike}
  */
 
-export type CreateProps<
-    M extends AnyModel,
-    MIndexedFieldKeys extends FieldSpecKeys<M, OneToOne | ForeignKey> = FieldSpecKeys<M, OneToOne | ForeignKey>
-> = Optional<
+export type CreateProps<M extends AnyModel> = Optional<
     {
         [K in keyof ModelFields<M>]: {
-            [P in K]: P extends RelationKeys<M>
-                ? (P extends MutableQuerySetKeys<M>
-                      ? ReadonlyArray<IdOrModelLike<RelatedModel<M, P>>>
-                      : P extends Extract<ModelRelationKeys<M>, MIndexedFieldKeys>
-                      ? IdOrModelLike<RelatedModel<M, P>>
-                      : never)
-                : P extends OtherKeys<M>
+            [P in K]: P extends OtherKeys<M>
                 ? ModelFields<M>[P]
+                : P extends MutableQuerySetKeys<M>
+                ? ReadonlyArray<IdOrModelLike<RelatedModel<M, P>>>
+                : P extends FieldSpecKeys<M, OneToOne | ForeignKey>
+                ? (P extends ModelRelationKeys<M> ? IdOrModelLike<RelatedModel<M, P>> : never)
                 : never
         }[K]
     },
@@ -541,39 +538,17 @@ export type CreateProps<
 /**
  * @internal
  */
-export type RelationKeys<M extends AnyModel> = Extract<
-    keyof Required<ModelFields<M>>,
-    keyof PickByValue<Required<ModelFields<M>>, QuerySet | Model>
->;
+export type MutableQuerySetKeys<M extends AnyModel> = keyof PickByValue<Required<ModelFields<M>>, MutableQuerySet>;
 
 /**
  * @internal
  */
-export type MutableQuerySetKeys<M extends AnyModel> = Extract<
-    keyof Required<ModelFields<M>>,
-    keyof PickByValue<Required<ModelFields<M>>, MutableQuerySet>
->;
+export type ModelRelationKeys<M extends AnyModel> = keyof PickByValue<Required<ModelFields<M>>, Model>;
 
 /**
  * @internal
  */
-export type ModelRelationKeys<M extends AnyModel> = Extract<
-    keyof Required<ModelFields<M>>,
-    keyof PickByValue<Required<ModelFields<M>>, Model>
->;
-
-/**
- * @internal
- */
-export type QuerySetKeys<M extends AnyModel> = Extract<
-    keyof Required<ModelFields<M>>,
-    keyof PickByValue<Required<ModelFields<M>>, QuerySet>
->;
-
-/**
- * @internal
- */
-export type VirtualQuerySetKeys<M extends AnyModel> = Exclude<QuerySetKeys<M>, MutableQuerySetKeys<M>>;
+export type QuerySetKeys<M extends AnyModel> = keyof PickByValue<Required<ModelFields<M>>, QuerySet>;
 
 /**
  * @internal
@@ -588,7 +563,7 @@ export type OtherKeys<M extends AnyModel> = Exclude<
  */
 export type RelatedModel<
     M extends AnyModel,
-    K extends RelationKeys<M>,
+    K extends MutableQuerySetKeys<M> | QuerySetKeys<M> | ModelRelationKeys<M>,
     MFields extends Required<ModelFields<M>> = Required<ModelFields<M>>
 > = MFields[K] extends MutableQuerySet<infer RM, infer Props>
     ? RM
