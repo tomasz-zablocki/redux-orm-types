@@ -178,7 +178,9 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      * @throws {Error} If more than one entity matches the properties in `lookupObj`.
      * @return a {@link SessionBoundModel} instance that matches the properties in `lookupObj`.
      */
-    static get<M extends AnyModel, TProps extends LookupSpec<M>>(lookupObj: TProps): SessionBoundModel<M, TProps> | null;
+    static get<M extends AnyModel, TProps extends LookupSpec<M>>(
+        lookupObj: TProps
+    ): SessionBoundModel<M, TProps> | null;
 
     /**
      * Returns a {@link Model} instance for the object with id `id`.
