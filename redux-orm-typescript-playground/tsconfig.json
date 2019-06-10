@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "declaration": false,
+    "importHelpers": false,
+    "noEmitHelpers": true,
+    "noEmitOnError": true,
+     "noUnusedLocals": true,
+    "pretty": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "stripInternal": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "lib": ["esnext"],
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "baseUrl": "../types",
+    "typeRoots": ["../types", "./node_modules/@types"],
+    "types": ["jest"],
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
