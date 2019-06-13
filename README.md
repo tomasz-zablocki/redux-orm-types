@@ -6,7 +6,5 @@
 
 [Redux-ORM typings](https://www.npmjs.com/package/@types/redux-orm) development project, type declaration experiments and alike.
 
-
-
 **All `@types/redux-orm` package related concerns and questions are more than welcome.
 Leave an issue and I'll try to address it as soon as possible.**

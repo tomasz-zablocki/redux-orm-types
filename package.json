@@ -1,12 +1,23 @@
 {
   "name": "redux-orm-typings",
   "version": "0.13.2",
-  "description": "",
+  "description": "Redux-ORM typings development project, type declaration experiments and alike",
+  "keywords": [
+    "redux-orm",
+    "typescript",
+    "typings",
+    "static typing"
+  ],
   "dependencies": {
     "@babel/plugin-proposal-class-properties": "^7.4.4",
     "jsdoc": "^3.6.2",
     "utility-types": "^3.7.0"
   },
+  "author": {
+    "name": "Tomasz Zabłocki",
+    "email": "tomasz.zablocki@gmail.com"
+  },
+  "license": "MIT",
   "devDependencies": {
     "@babel/cli": "^7.4.4",
     "@babel/core": "^7.4.5",
@@ -28,7 +39,6 @@
     "url": "https://github.com/tomasz-zablocki/redux-orm-typings.git"
   },
   "scripts": {
-    "lint": "dtslint types",
-    "run": "ts-node types/redux-orm/redux-orm-tests.ts",
+    "test": "dtslint types redux-orm"
   }
 }
