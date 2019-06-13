@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "esnext",
+    "module": "commonjs",
     "moduleResolution": "node",
     "declaration": false,
-    "importHelpers": false,
+    "importHelpers": true,
     "noEmitHelpers": true,
     "noEmitOnError": true,
      "noUnusedLocals": true,
@@ -12,10 +12,10 @@
     "removeComments": true,
     "sourceMap": true,
     "stripInternal": true,
-    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "lib": ["esnext"],
+    "lib": ["esnext","es6"],
+    "outDir": "out",
     "noImplicitAny": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
@@ -25,5 +25,6 @@
     "types": ["jest"],
     "noEmit": true,
     "forceConsistentCasingInFileNames": true
-  }
+  },
+  "include": ["src/*.ts"]
 }

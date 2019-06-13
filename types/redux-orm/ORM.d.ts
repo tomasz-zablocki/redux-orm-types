@@ -88,7 +88,7 @@ export class ORM<I extends IndexedModelClasses<any>, ModelNames extends keyof I 
      *
      * @return a new {@link Session} instance
      */
-    session(state: OrmState<I>): OrmSession<I>;
+    session(state?: OrmState<I>): OrmSession<I>;
 
     /**
      * Begins an mutable database session.

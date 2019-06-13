@@ -17,6 +17,7 @@
   },
   "scripts": {
     "test": "jest --config jest.config.json",
-    "test:watch": "jest --config jest.config.json --watch"
+    "test:watch": "jest --config jest.config.json --watch",
+    "run": "ts-node src/index"
   }
 }
