@@ -37,7 +37,7 @@ export interface SerializableMap {
  * - {@link MutableQuerySet} - for many-to-many relations
  * - {@link QuerySet} - for reverse side of foreign keys
  */
-export type ModelField = MutableQuerySet | QuerySet | SessionBoundModel | Serializable;
+export type ModelField = QuerySet | SessionBoundModel | Serializable;
 
 /**
  * Map of fields restriction to supported field types.
@@ -122,7 +122,7 @@ export default class Model<MClass extends typeof AnyModel = any, Fields extends 
      *
      * @return a reference to the plain JS object in the store
      */
-    readonly ref: Ref<InstanceType<MClass>>;
+    readonly ref: Ref<this>;
 
     /**
      * Creates a Model instance from it's properties.
@@ -477,7 +477,7 @@ export type ModelClass<M extends AnyModel> = ReturnType<M['getClass']>;
 /**
  * @internal
  */
-export type ModelFields<M extends Model> = [ConstructorParameters<ModelClass<M>>] extends [[infer U]]
+export type ModelFields<M extends Model> = ConstructorParameters<ModelClass<M>> extends [infer U]
     ? U extends ModelFieldMap
         ? U
         : never
