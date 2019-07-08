@@ -27,7 +27,6 @@
     "@types/node": "^12.0.3",
     "dtslint": "latest",
     "prettier": "^1.17.1",
-    "redux-orm": "^0.13.3",
     "ts-node": "^8.2.0",
     "tslint": "^5.17.0",
     "tsutils": "^3.14.0",

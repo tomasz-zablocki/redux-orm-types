@@ -444,12 +444,12 @@ const sessionFixture = () => {
         (session, foo, missingArg) => foo // $ExpectError
     ) as (state: RootState) => number;
 
-    const invalidSelector2 = createOrmSelector(
+    const invalidSelector2: TestSelector = createOrmSelector(
         orm,
         s => s.db,
         s => s.foo,
-        (session, foo) => session.Book.filter({ title: foo }).at(0)!.ref // $ExpectError
-    ) as TestSelector;
+        (session, foo) => session.Book.withId(foo)!.ref // $ExpectError
+    );
 
     const state = { db: orm.getEmptyState(), foo: 1, bar: 'foo' };
 
