@@ -1,7 +1,17 @@
 // import { createSchema } from './createSchema';
 // import { consoleLogger } from 'types-publisher';
-import Model, { attr, fk, many, MutableQuerySet, oneToOne, ORM, QuerySet } from 'redux-orm';
-import { consoleLogger } from 'types-publisher';
+import Model, {
+    attr,
+    createSelector,
+    fk,
+    many,
+    MutableQuerySet,
+    oneToOne,
+    ORM,
+    OrmState,
+    QuerySet,
+    Ref
+} from 'redux-orm';
 
 // const ormSession = createSchema().session();
 
@@ -43,7 +53,7 @@ export class Questionnaire extends Model<typeof Questionnaire> {
     QuestionGroups: MutableQuerySet<QuestionGroup>;
 }
 
-export class Book extends Model <typeof Book> {
+export class Book extends Model<typeof Book> {
     static modelName = 'Book';
 
     static fields = {
@@ -102,19 +112,6 @@ const ormSession = orm.session(orm.getEmptyState());
 
 // ormSession.Book.create({ name: 'sdddad', author: '1' });
 
-const withId = ormSession.Book.withId(2);
-const p = ormSession.Person.withId('1');
-if (!p) throw new Error('r');
-
-const bb = p.books.all().toRefArray();
-
-consoleLogger.info('' + JSON.stringify(bb, null, 2));
-consoleLogger.info('' + withId);
-consoleLogger.info('' + JSON.stringify(ormSession.state, null, 2));
-
-const x = withId!!.name;
-
-consoleLogger.info(x);
 const sss = orm.session(orm.getEmptyState());
 const a = sss.Person.create({ uid: '10', aaasd: 'ass', lastName: 'vv', firstName: 'jan' });
 sss.Book.create({ name: 'aaa', author: a });
@@ -179,3 +176,24 @@ sss.Book.all()
 // c.u
 
 // sss.Book.first()!!.related.remove(...[1, 2]);
+interface RootState {
+    db: OrmState<typeof schema>;
+    foo: number;
+    bar: string;
+}
+const selector: (state: RootState) => Ref<Book> = createSelector(
+    orm,
+    s => s.db,
+    s => s.foo,
+    s => s.bar,
+    (session, foo, bar) => ({ ...session.Book.first()!.ref, foo, bar })
+);
+ormSession.Book.create({ author: a, id: 4, name: 'asd' });
+ormSession.Person.create({ uid: 'ss', lastName: 'asd', firstName: 'asd', person: a, nationality: 'pl' });
+selector({ db: ormSession.state, foo: 1, bar: 'a' });
+const selector2 = createSelector(
+    orm,
+    session => session.Person.all().toRefArray()
+);
+
+selector2(ormSession.state);

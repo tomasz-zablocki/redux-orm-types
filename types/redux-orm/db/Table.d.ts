@@ -1,4 +1,4 @@
-import Model, { AnyModel, FieldSpecKeys, IdType, Ref } from '../Model';
+import Model, { AnyModel, FieldSpecKeys, IdType, ModelClass, Ref } from '../Model';
 import { ForeignKey, OneToOne, TableOpts } from '../index';
 import { Field } from '../fields';
 
@@ -27,7 +27,11 @@ export interface TableOpts {
     readonly mapName?: string;
     readonly fields?: { [K: string]: Field };
 }
-export type UnBox<M extends {'options': any}> = M['options'] extends () => infer R ? R : M['options'] extends infer R ? R : never;
+export type UnBox<M extends { options: any }> = M['options'] extends () => infer R
+    ? R
+    : M['options'] extends infer R
+    ? R
+    : never;
 
 /**
  * @internal
@@ -36,28 +40,7 @@ export type ExtractModelOption<
     MClass extends typeof Model,
     K extends keyof TableOpts,
     DefaultValue extends string
-    > = UnBox<MClass> extends {[P in K]: infer R} ? R extends string ? R : never : DefaultValue;
-
-/**
- * Model idAttribute option extraction helper.
- *
- * Falls back to `'id'` if not specified explicitly via {@link Model.options}.
- */
-export type IdAttribute<MClass extends typeof AnyModel> = ExtractModelOption<MClass, 'idAttribute', 'id'>;
-
-/**
- * Model arrName option extraction helper.
- *
- * Falls back to `'items'` if not specified explicitly via {@link Model.options}.
- */
-export type ArrName<MClass extends typeof AnyModel> = ExtractModelOption<MClass, 'arrName', 'items'>;
-
-/**
- * Model mapName option extraction helper.
- *
- * Falls back to `'itemsById'` if not specified explicitly via {@link Model.options}.
- */
-export type MapName<MClass extends typeof AnyModel> = ExtractModelOption<MClass, 'mapName', 'itemsById'>;
+> = UnBox<MClass> extends { [P in K]: infer R } ? (R extends string ? R : never) : DefaultValue;
 
 /**
  * Unbox {@link Model#options} or fallback to default for others.
@@ -65,9 +48,9 @@ export type MapName<MClass extends typeof AnyModel> = ExtractModelOption<MClass,
  * @internal
  */
 export interface ModelTableOpts<MClass extends typeof AnyModel> {
-    readonly idAttribute: IdAttribute<MClass>;
-    readonly arrName: ArrName<MClass>;
-    readonly mapName: MapName<MClass>;
+    readonly idAttribute: ExtractModelOption<MClass, 'idAttribute', 'id'>;
+    readonly arrName: ExtractModelOption<MClass, 'arrName', 'items'>;
+    readonly mapName: ExtractModelOption<MClass, 'mapName', 'itemsById'>;
     readonly fields: MClass['fields'];
 }
 
@@ -89,7 +72,7 @@ export class Table<MClass extends typeof AnyModel> {
      */
     constructor(userOpts?: ModelTableOpts<MClass>);
 
-    getEmptyState(): TableState<MClass>;
+    getEmptyState(): TableState<InstanceType<MClass>>;
 }
 
 /**
@@ -99,8 +82,8 @@ export interface DefaultMeta<MIdType> {
     maxId: MIdType extends number ? number : null | number;
 }
 
-export type TableIndexes<MClass extends typeof AnyModel> = {
-    [K in FieldSpecKeys<InstanceType<MClass>, OneToOne | ForeignKey>]: string
+export type TableIndexes<M extends AnyModel> = {
+    [K in FieldSpecKeys<M, OneToOne | ForeignKey>]: string;
 };
 
 /**
@@ -108,12 +91,8 @@ export type TableIndexes<MClass extends typeof AnyModel> = {
  *
  * Infers actual state of the ORM branch based on the {@link Model} class provided.
  */
-export type TableState<MClass extends typeof AnyModel> = {
-    readonly meta: DefaultMeta<IdType<InstanceType<MClass>>>;
-    readonly indexes: TableIndexes<MClass>;
-} & { readonly [K in ArrName<MClass>]: ReadonlyArray<IdType<InstanceType<MClass>>> } &
-    {
-        readonly [K in MapName<MClass>]: {
-            readonly [K: string]: Ref<InstanceType<MClass>>;
-        }
-    };
+export type TableState<M extends AnyModel> = {
+    readonly meta: DefaultMeta<IdType<M>>;
+    readonly indexes: TableIndexes<M>;
+} & Record<ExtractModelOption<ModelClass<M>, 'arrName', 'items'>, ReadonlyArray<IdType<M>>> &
+    Record<ExtractModelOption<ModelClass<M>, 'mapName', 'itemsById'>, Record<string, Ref<M>>>;

@@ -1,5 +1,6 @@
 import {
     attr,
+    createReducer,
     createSelector as createOrmSelector,
     fk,
     IdKey,
@@ -50,11 +51,10 @@ class Book extends Model<typeof Book> {
                 break;
         }
     }
-
     title: string;
     coverArt: string;
     publisher: Publisher;
-    authors?: MutableQuerySet<Person>;
+    authors: MutableQuerySet<Person>;
 }
 
 class Person extends Model<typeof Person> {
@@ -69,7 +69,7 @@ class Person extends Model<typeof Person> {
     firstName: string;
     lastName: string;
     nationality?: string;
-    books?: MutableQuerySet<Book>;
+    books: MutableQuerySet<Book>;
 }
 
 class Authorship extends Model<typeof Authorship> {
@@ -79,7 +79,6 @@ class Authorship extends Model<typeof Authorship> {
         book: fk('Book'),
         author: fk('Person')
     };
-
     year?: number;
     book: Book;
     author: Person;
@@ -89,7 +88,7 @@ class Publisher extends Model<typeof Publisher> {
     static modelName = 'Publisher' as const;
     index: number;
     name: string;
-    books?: QuerySet<Book>;
+    books: QuerySet<Book>;
     static fields = {
         index: attr(),
         name: attr()
@@ -231,8 +230,10 @@ const sessionFixture = () => {
 (() => {
     const emptyState = ormFixture().getEmptyState();
 
-    const bookTableState = emptyState.Book; // $ExpectType TableState<typeof Book>
-    const bookItemsById = emptyState.Book.itemsById; // $ExpectType { readonly [K: string]: Ref<Book>; }
+    const bookTableState = emptyState.Book; // $ExpectType TableState<Book>
+    const items = emptyState.Book.items; // $ExpectType readonly string[]
+    const publisherItems = emptyState.Publisher.items; // $ExpectType readonly number[]
+    const bookItemsById = emptyState.Book.itemsById; // $ExpectType Record<string, Ref<Book>>
     const authorshipMetaState = emptyState.Authorship.meta.maxId; // $ExpectType number
     const bookMetaState = emptyState.Book.meta.maxId; // $ExpectType number | null
 })();
@@ -264,7 +265,7 @@ const sessionFixture = () => {
 
     type basicBookKeys = Exclude<keyof typeof basicBook, keyof Model>; // $ExpectType "title" | "coverArt" | "publisher" | "authors"
     const basicBookTitle = basicBook.title; // $ExpectType string
-    const authors = basicBook.authors; // $ExpectType MutableQuerySet<Person, {}> | undefined
+    const authors = basicBook.authors; // $ExpectType MutableQuerySet<Person, {}>
     const unknownPropertyError = basicBook.customProp; // $ExpectError
 
     const customProp = { foo: 0, bar: true };
@@ -284,13 +285,7 @@ const sessionFixture = () => {
 (() => {
     const orm = ormFixture();
 
-    type StateType = OrmState<Schema>;
-
-    return (state: StateType, action: CreateBookAction): StateType => {
-        const session = orm.session(state);
-        session.Book.create(action.payload);
-        return session.state;
-    };
+    createReducer(orm); // $ExpectType ORMReducer<{ Book: typeof Book; Authorship: typeof Authorship; Person: typeof Person; Publisher: typeof Publisher; }, any>
 })();
 
 // QuerySet type is retained though query chain until terminated.
@@ -339,11 +334,11 @@ const sessionFixture = () => {
 
     const orm = ormFixture();
 
-    const ormSelector = createOrmSelector(orm, session => session.Book.all().toRefArray()[0]);
-
     interface RootState {
         db: OrmState<Schema>;
     }
+
+    const ormSelector = createOrmSelector(orm, session => session.Book.all().toRefArray()[0]);
 
     const selector = createSelector<RootState, OrmState<Schema>, Ref<Book>>(
         ({ db }) => db,

@@ -1,9 +1,10 @@
 import { TableOpts } from './db';
-import { IdAttribute } from './db/Table';
+import { ExtractModelOption } from './db/Table';
 import { Attribute, AttributeWithDefault, FieldSpecMap, ForeignKey, OneToOne } from './fields';
-import { HardOmit, HardOptional, HardPick, OptionalKeys, Overwrite, PickByValue } from './helpers';
+import { HardOmit, HardOptional, HardPick, OptionalKeys, PickByValue } from './helpers';
 import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
 import { OrmSession } from './Session';
+import { IdType } from './index';
 
 /**
  * A primitive value
@@ -352,7 +353,7 @@ export class AnyModel extends Model {}
  * Relations can be provided in a flexible manner for both many-to-many and foreign key associations
  * @see {@link IdOrModelLike}
  */
-export type UpsertProps<M extends AnyModel> = Overwrite<Partial<CreateProps<M>>, { [K in IdKey<M>]-?: IdType<M> }>;
+export type UpsertProps<M extends AnyModel> = Omit<UpdateProps<M>, IdKey<M>> & { [K in IdKey<M>]: IdType<M> };
 
 /**
  * {@link Model#update} argument type
@@ -362,14 +363,14 @@ export type UpsertProps<M extends AnyModel> = Overwrite<Partial<CreateProps<M>>,
  * Relations can be provided in a flexible manner for both many-to-many and foreign key associations
  * @see {@link IdOrModelLike}
  */
-export type UpdateProps<M extends AnyModel> = Omit<UpsertProps<M>, IdKey<M>>;
+export type UpdateProps<M extends AnyModel> = Partial<CreateProps<M>>;
 
 /**
  * @internal
  */
-export type CustomInstanceProps<M extends AnyModel, Props extends object> = PickByValue<
-    HardOmit<Props, keyof M>,
-    Serializable
+export type CustomInstanceProps<M extends AnyModel, Props extends object> = HardOmit<
+    PickByValue<Props, Serializable>,
+    keyof M
 >;
 
 /**
@@ -377,7 +378,7 @@ export type CustomInstanceProps<M extends AnyModel, Props extends object> = Pick
  *
  * Falls back to `'id'` if not specified explicitly via {@link Model.options}.
  */
-export type IdKey<M extends AnyModel> = IdAttribute<ModelClass<M>>;
+export type IdKey<M extends AnyModel> = ExtractModelOption<ModelClass<M>, 'idAttribute', 'id'>;
 
 /**
  * Model id property type extraction helper.
@@ -391,7 +392,7 @@ export type RefFields<M extends AnyModel> = keyof HardPick<M, FieldSpecKeys<M, O
  * Type of {@link Model.ref} / database entry for a particular Model type
  */
 export type Ref<M extends Model> = {
-    [K in RefFields<M>]: M[K] extends Model ? IdType<M[K]> : M[K];
+    readonly [K in RefFields<M>]: M[K] extends Model ? IdType<M[K]> : M[K];
 };
 
 /**
