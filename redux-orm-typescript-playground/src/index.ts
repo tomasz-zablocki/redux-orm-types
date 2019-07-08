@@ -12,11 +12,16 @@ import { consoleLogger } from 'types-publisher';
 // consoleLogger.info(JSON.stringify(ormSession.state, null, 2));
 // consoleLogger.info(JSON.stringify(cover, null, 2));
 
-export class Question extends Model<typeof Question> {
+export class PersonQuestionAnswer extends Model<typeof PersonQuestionAnswer> {
     id: string;
     tempModelId: string;
-    QuestionGroup: QuestionGroup;
-    AnswerOptions?: MutableQuerySet<AnswerOption>;
+    AnswerId: string;
+    AnswerText: string;
+}
+export class AnswerOption extends Model<typeof AnswerOption> {
+    id: string;
+    tempModelId: string;
+    PersonQuestionAnswersByAnswer?: MutableQuerySet<PersonQuestionAnswer>;
 }
 
 export class QuestionGroup extends Model<typeof QuestionGroup> {
@@ -26,24 +31,19 @@ export class QuestionGroup extends Model<typeof QuestionGroup> {
     Questions?: MutableQuerySet<Question>;
 }
 
-export class AnswerOption extends Model<typeof AnswerOption> {
+export class Question extends Model<typeof Question> {
     id: string;
     tempModelId: string;
-    PersonQuestionAnswersByAnswer?: MutableQuerySet<PersonQuestionAnswer>;
+    QuestionGroup: QuestionGroup;
+    AnswerOptions?: MutableQuerySet<AnswerOption>;
 }
 
-export class PersonQuestionAnswer extends Model<typeof PersonQuestionAnswer> {
-    id: string;
-    tempModelId: string;
-    AnswerId: string;
-    AnswerText: string;
-}
 export class Questionnaire extends Model<typeof Questionnaire> {
     Name: string;
     QuestionGroups: MutableQuerySet<QuestionGroup>;
 }
 
-export class Book extends Model {
+export class Book extends Model <typeof Book> {
     static modelName = 'Book';
 
     static fields = {

@@ -20,7 +20,6 @@ export default class Session<I extends IndexedModelClasses<any>> {
 
     /**
      * Creates a new Session.
-     *
      * @param schema - {@Link ORM} instance, with bootstrapped {@link Model} prototypes.
      * @param  db - a {@link Database} instance
      * @param  state - the database {@link OrmState}
@@ -47,11 +46,8 @@ export default class Session<I extends IndexedModelClasses<any>> {
 
     /**
      * Applies update to a model state.
-     *
-     * @param  update - the update command object.
-     *
+     * @param update - the update command object.
      * @returns query result.
-     *
      * @see {@link DbAction}
      * @see {@link UpdateSpec}
      * @see {@link DbActionResult}

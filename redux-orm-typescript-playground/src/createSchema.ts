@@ -1,27 +1,21 @@
 import { attr, fk, many, Model, MutableQuerySet, oneToOne, ORM, QuerySet } from 'redux-orm';
 
-interface CoverFields {
-    id: number;
-    src: string;
-}
-
-class Cover extends Model<typeof Cover, CoverFields> {
+class Cover extends Model<typeof Cover> {
     static modelName = 'Cover';
     static fields = {
         id: attr(),
         src: attr()
     };
+    id: number;
+    src: string;
 }
 
-interface AuthorFields {
+class Author extends Model<typeof Author> {
+    static modelName = 'Author' as const;
     id: number;
     name: string;
     publishers: MutableQuerySet<Publisher>;
     books: QuerySet<Book>;
-}
-
-class Author extends Model<typeof Author, AuthorFields> {
-    static modelName = 'Author' as const;
 
     static get fields() {
         return {
@@ -36,32 +30,26 @@ class Author extends Model<typeof Author, AuthorFields> {
     }
 }
 
-interface GenreFields {
-    id: number;
-    name: string;
-    books: QuerySet<Book>;
-}
-
-class Genre extends Model<typeof Genre, GenreFields> {
+class Genre extends Model<typeof Genre> {
     static modelName = 'Genre';
     static fields = {
         id: attr(),
         name: attr()
     };
-}
-
-interface TagFields {
+    id: number;
     name: string;
-    books: MutableQuerySet<Book>;
-    parentTags: MutableQuerySet<Tag>;
-    subTags: MutableQuerySet<Tag>;
+    books: QuerySet<Book>;
 }
 
-class Tag extends Model<typeof Tag, TagFields> {
+class Tag extends Model<typeof Tag> {
     static modelName = 'Tag';
     static options = {
         idAttribute: 'name'
     };
+    name: string;
+    books: MutableQuerySet<Book>;
+    parentTags: MutableQuerySet<Tag>;
+    subTags: MutableQuerySet<Tag>;
     static fields = {
         name: attr(),
         subTags: many('this', 'parentTags')
@@ -70,26 +58,21 @@ class Tag extends Model<typeof Tag, TagFields> {
     };
 }
 
-interface PublisherFields {
-    id: number;
-    name: string;
-    books: QuerySet<Book>;
-}
-class Publisher extends Model<typeof Publisher, PublisherFields> {
+class Publisher extends Model<typeof Publisher> {
     static modelName = 'Publisher';
     static fields = {
         id: attr(),
         name: attr()
     };
-}
-
-interface MovieFields {
     id: number;
     name: string;
+    books: QuerySet<Book>;
 }
-
-class Movie extends Model<typeof Movie, MovieFields> {
+class Movie extends Model<typeof Movie> {
     static modelName = 'Movie';
+
+    id: number;
+    name: string;
     static fields = {
         id: attr(),
         name: attr(),
@@ -105,18 +88,7 @@ class Movie extends Model<typeof Movie, MovieFields> {
     };
 }
 
-interface BookFields {
-    id: number;
-    name: string;
-    releaseYear: number;
-    author: Author;
-    cover: Cover;
-    genres: MutableQuerySet<Genre>;
-    tags: MutableQuerySet<Tag>;
-    publisher: Publisher;
-}
-
-class Book extends Model<typeof Book, BookFields> {
+class Book extends Model<typeof Book> {
     static modelName = 'Book' as const;
 
     static get fields() {
@@ -131,6 +103,14 @@ class Book extends Model<typeof Book, BookFields> {
             publisher: fk('Publisher', 'books')
         };
     }
+    id: number;
+    name: string;
+    releaseYear: number;
+    author: Author;
+    cover: Cover;
+    genres: MutableQuerySet<Genre>;
+    tags: MutableQuerySet<Tag>;
+    publisher: Publisher;
 }
 
 const schema = { Book, Author, Cover, Genre, Tag, Publisher, Movie };

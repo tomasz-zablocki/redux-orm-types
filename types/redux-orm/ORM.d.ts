@@ -100,7 +100,7 @@ export class ORM<I extends IndexedModelClasses<any>, ModelNames extends keyof I 
      *
      * @return a new {@link Session} instance
      */
-    mutableSession(state: OrmState<I>): OrmSession<I>;
+    mutableSession(state?: OrmState<I>): OrmSession<I>;
 
     /**
      * Acquire database reference.

@@ -3,6 +3,7 @@ import {
     createSelector as createOrmSelector,
     fk,
     IdKey,
+    IdOrModelLike,
     IdType,
     many,
     Model,
@@ -16,7 +17,7 @@ import {
 
 interface CreateBookAction {
     type: 'CREATE_BOOK';
-    payload: { coverArt?: string; title: string; publisher: number; authors?: string[] };
+    payload: { coverArt?: string; title: string; publisher: IdOrModelLike<Publisher>; authors?: string[] };
 }
 
 interface DeleteBookAction {
@@ -26,14 +27,7 @@ interface DeleteBookAction {
 
 type RootAction = CreateBookAction | DeleteBookAction;
 
-interface BookFields {
-    title: string;
-    coverArt: string;
-    publisher: Publisher;
-    authors?: MutableQuerySet<Person>;
-}
-
-class Book extends Model<typeof Book, BookFields> {
+class Book extends Model<typeof Book> {
     static modelName = 'Book' as const;
     static fields = {
         title: attr(),
@@ -56,17 +50,14 @@ class Book extends Model<typeof Book, BookFields> {
                 break;
         }
     }
+
+    title: string;
+    coverArt: string;
+    publisher: Publisher;
+    authors?: MutableQuerySet<Person>;
 }
 
-interface PersonFields {
-    id: string;
-    firstName: string;
-    lastName: string;
-    nationality?: string;
-    books?: MutableQuerySet<Book>;
-}
-
-class Person extends Model<typeof Person, PersonFields> {
+class Person extends Model<typeof Person> {
     static modelName = 'Person' as const;
     static fields = {
         id: attr(),
@@ -74,31 +65,31 @@ class Person extends Model<typeof Person, PersonFields> {
         lastName: attr(),
         nationality: attr()
     };
+    id: string;
+    firstName: string;
+    lastName: string;
+    nationality?: string;
+    books?: MutableQuerySet<Book>;
 }
 
-interface AuthorshipFields {
-    year?: number;
-    book: Book;
-    author: Person;
-}
-
-class Authorship extends Model<typeof Authorship, AuthorshipFields> {
+class Authorship extends Model<typeof Authorship> {
     static modelName = 'Authorship' as const;
     static fields = {
         year: attr(),
         book: fk('Book'),
         author: fk('Person')
     };
+
+    year?: number;
+    book: Book;
+    author: Person;
 }
 
-interface PublisherFields {
+class Publisher extends Model<typeof Publisher> {
+    static modelName = 'Publisher' as const;
     index: number;
     name: string;
     books?: QuerySet<Book>;
-}
-
-class Publisher extends Model<typeof Publisher, PublisherFields> {
-    static modelName = 'Publisher' as const;
     static fields = {
         index: attr(),
         name: attr()
@@ -128,7 +119,6 @@ const sessionFixture = () => {
 // argOptionalityAtModelCreation - inferred optionality of ModelType.create argument properties
 (() => {
     const { Book, Publisher } = sessionFixture();
-
     /**
      * 1.A. `number` Model identifiers are optional due to built-in incremental sequencing of numeric identifiers
      * @see {@link PublisherFields.index}

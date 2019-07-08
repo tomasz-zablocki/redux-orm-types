@@ -9,7 +9,6 @@
     "noEmitOnError": true,
      "noUnusedLocals": true,
     "pretty": true,
-    "removeComments": true,
     "sourceMap": true,
     "stripInternal": true,
     "esModuleInterop": true,

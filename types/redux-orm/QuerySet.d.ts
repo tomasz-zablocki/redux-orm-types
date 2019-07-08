@@ -2,9 +2,9 @@ import { QueryClause } from './db';
 import Model, {
     AnyModel,
     CustomInstanceProps,
-    IdOrModelLike,
-    ModelClass,
+    IdOrModelLike, ModelClass,
     Ref,
+    SerializableObject,
     SessionBoundModel,
     UpdateProps
 } from './Model';
@@ -23,28 +23,28 @@ export type SortOrder = 'asc' | 'desc' | true | false;
  *
  * {@see QuerySet.orderBy}
  */
-export type SortIteratee<M extends Model> = keyof Ref<M> | { (row: Ref<M>): any };
+export type SortIteratee<M extends AnyModel> = keyof Ref<M> | { (row: Ref<M>): any };
 
 /**
  * Lookup clause as an object specifying props to match with plain object Model representation stored in the database.
  * {@see QuerySet.exclude}
  * {@see QuerySet.filter}
  */
-export type LookupProps<M extends Model> = Partial<Ref<M>>;
+export type LookupProps<M extends AnyModel> = Partial<Ref<M>>;
 
 /**
  * Lookup clause as predicate accepting plain object Model representation stored in the database.
  * {@see QuerySet.exclude}
  * {@see QuerySet.filter}
  */
-export type LookupPredicate<M extends Model> = (row: Ref<M>) => boolean;
+export type LookupPredicate<M extends AnyModel> = (row: Ref<M>) => boolean;
 
 /**
  * A union of lookup clauses.
  * {@see QuerySet.exclude}
  * {@see QuerySet.filter}
  */
-export type LookupSpec<M extends Model> = LookupProps<M> | LookupPredicate<M>;
+export type LookupSpec<M extends AnyModel> = LookupProps<M> | LookupPredicate<M>;
 
 /**
  * A lookup query result.
@@ -53,9 +53,11 @@ export type LookupSpec<M extends Model> = LookupProps<M> | LookupPredicate<M>;
  * {@see QuerySet.exclude}
  * {@see QuerySet.filter}
  */
-export type LookupResult<M extends Model, TLookup extends LookupSpec<M>> = TLookup extends LookupPredicate<M>
+export type LookupResult<M extends AnyModel, TLookup extends LookupSpec<M>> = TLookup extends LookupPredicate<M>
     ? QuerySet<M>
-    : QuerySet<M, CustomInstanceProps<M, LookupProps<M>>>;
+    : TLookup extends SerializableObject
+    ? QuerySet<M, CustomInstanceProps<M, TLookup>>
+    : never;
 
 /**
  * <p>
@@ -79,16 +81,13 @@ export type LookupResult<M extends Model, TLookup extends LookupSpec<M>> = TLook
  *
  * QuerySet instances return copies, so chaining filters doesn't
  * mutate the previous instances.
- *
- * @template M type of {@link Model} instances returned by QuerySet's methods.
- * @template InstanceProps additional properties available on QuerySet's elements.
  */
-export default class QuerySet<M extends AnyModel = any, InstanceProps extends object = {}> {
+export default class QuerySet<M extends AnyModel = any, InstanceProps extends SerializableObject = {}> {
     /**
      * Creates a `QuerySet`. The constructor is mainly for internal use;
      * Access QuerySet instances from {@link Model}.
      *
-     * @param  modelClass - the {@link Model} class of objects in this QuerySet.
+     * @param modelClass the {@link Model} class of objects in this QuerySet.
      * @param  clauses - query clauses needed to evaluate the set.
      * @param  [opts] - additional options
      */
@@ -230,7 +229,6 @@ export default class QuerySet<M extends AnyModel = any, InstanceProps extends ob
      * Records an update specified with `mergeObj` to all the objects
      * in the {@link QuerySet} instance.
      *
-     * @param  mergeObj - an object extending {@link UpdateProps}, to be merged with all the objects in this QuerySet.
      */
     update(mergeObj: UpdateProps<M>): void;
 
@@ -261,6 +259,6 @@ export interface ManyToManyExtensions<M extends AnyModel> {
 /**
  * A {@link QuerySet} extended with {@link ManyToMany} specific functionality - {@link ManyToManyExtensions}.
  */
-export interface MutableQuerySet<M extends AnyModel = any, InstanceProps extends object = {}>
+export interface MutableQuerySet<M extends AnyModel = any, InstanceProps extends SerializableObject = {}>
     extends ManyToManyExtensions<M>,
         QuerySet<M, InstanceProps> {}

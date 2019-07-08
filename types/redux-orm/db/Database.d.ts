@@ -1,8 +1,8 @@
 import { IndexedModelClasses, OrmState } from '../ORM';
 import { CREATE, DELETE, EXCLUDE, FAILURE, FILTER, ORDER_BY, SUCCESS, UPDATE } from '../constants';
 import { ModelTableOpts, Table } from './Table';
-import { Serializable } from '../Model';
 import { BatchToken } from '../Session';
+import { Serializable } from '../Model';
 
 /**
  * A type of {@link QueryClause}.

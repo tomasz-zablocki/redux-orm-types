@@ -27,23 +27,16 @@ export interface TableOpts {
     readonly mapName?: string;
     readonly fields?: { [K: string]: Field };
 }
+export type UnBox<M extends {'options': any}> = M['options'] extends () => infer R ? R : M['options'] extends infer R ? R : never;
 
 /**
  * @internal
  */
 export type ExtractModelOption<
-    MClass extends typeof AnyModel,
+    MClass extends typeof Model,
     K extends keyof TableOpts,
     DefaultValue extends string
-> = MClass['options'] extends () => { [P in K]: infer R }
-    ? R extends string
-        ? R
-        : DefaultValue
-    : MClass['options'] extends { [P in K]: infer R }
-    ? R extends string
-        ? R
-        : DefaultValue
-    : DefaultValue;
+    > = UnBox<MClass> extends {[P in K]: infer R} ? R extends string ? R : never : DefaultValue;
 
 /**
  * Model idAttribute option extraction helper.

@@ -21,3 +21,8 @@ export type Intersection<T extends object, U extends object> = Pick<
 >;
 
 export type OptionalKeys<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? K : never }[keyof T];
+export type HardPick<T extends object, K extends keyof any> = {
+    [P in Extract<keyof T, K>]: T[P];
+};
+export type HardOmit<T extends object, K extends keyof any> = HardPick<T, Exclude<keyof T, K>>;
+export type HardOptional<T extends object, K extends keyof any> = Optional<T, Extract<keyof T, K>>;
