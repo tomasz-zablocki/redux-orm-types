@@ -133,7 +133,7 @@ const sessionFixture = () => {
      * 1.A. `number` Model identifiers are optional due to built-in incremental sequencing of numeric identifiers
      * @see {@link PublisherFields.index}
      */
-     Publisher.create({ name: 'P1' });
+    Publisher.create({ name: 'P1' });
 
     /**
      * 1.B. `string` identifiers are mandatory
@@ -144,7 +144,7 @@ const sessionFixture = () => {
      * 2. non-relational fields with corresponding descriptors that contain defined `getDefault` callback: (`attr({ getDefault: () => 'empty.png' })`)
      * @see {@link Book#fields.coverArt}
      */
-     Book.create({ title: 'B2', publisher: 1 });
+    Book.create({ title: 'B2', publisher: 1 });
 
     /**
      * 3. both attribute and relational fields where corresponding ModelFields interface property has optional (`?`) modifier
@@ -180,7 +180,7 @@ const sessionFixture = () => {
     Book.create({ title: 'B1', publisher: publisherModel, authors: [authorModel] });
     Book.create({
         title: 'B1',
-        publisher: publisherModel.index ,
+        publisher: publisherModel.index,
         authors: [authorModel, 'A1', authorModel, authorModel.ref.id]
     });
 
@@ -253,7 +253,7 @@ const sessionFixture = () => {
 
     // $ExpectType { Book: ModelType<Book>; Person: ModelType<Person>; Publisher: ModelType<Publisher>; }
     const sessionBoundModels = { Book, Person, Publisher };
-    return {...sessionBoundModels};
+    return { ...sessionBoundModels };
 })();
 
 // IdKey and IdType mapped types support for valid identifier configurations
@@ -366,4 +366,97 @@ const sessionFixture = () => {
     );
 
     selector({ db: orm.getEmptyState() }); // $ExpectType Ref<Book>
+})();
+
+// advanced selectors
+(() => {
+    const orm = ormFixture();
+
+    interface RootState {
+        foo: number;
+        bar: string;
+        db: OrmState<Schema>;
+    }
+
+    type TestSelector = (state: RootState) => Ref<Book>;
+
+    const selector1 = createOrmSelector(
+        orm,
+        s => s.db,
+        s => s.bar,
+        (session, title) => session.Book.get({ title })!.ref
+    ) as TestSelector;
+
+    const selector2 = createOrmSelector(
+        orm,
+        s => s.db,
+        s => s.foo,
+        s => s.bar,
+        (session, id, title) => session.Book.get({ id, title })!.ref
+    ) as TestSelector;
+
+    const selector3 = createOrmSelector(
+        orm,
+        s => s.db,
+        s => s.foo,
+        s => s.bar,
+        s => s.foo,
+        (session, id, title, id2) => session.Book.get({ id, title, id2 })!.ref
+    ) as TestSelector;
+
+    const selector4 = createOrmSelector(
+        orm,
+        s => s.db,
+        s => s.foo,
+        s => s.bar,
+        s => s.foo,
+        s => s.bar,
+        (session, id, title, id2, title2) => session.Book.get({ id, title, id2, title2 })!.ref
+    ) as TestSelector;
+
+    const selector5 = createOrmSelector(
+        orm,
+        s => s.db,
+        s => s.foo,
+        s => s.bar,
+        s => s.foo,
+        s => s.bar,
+        s => s.foo,
+        (session, ...args) => session.Book.get({ title: args[1] })!.ref
+    ) as TestSelector;
+
+    const selector6 = createOrmSelector(
+        orm,
+        s => s.db,
+        s => s.foo,
+        s => s.bar,
+        s => s.foo,
+        s => s.bar,
+        s => s.foo,
+        s => s.bar,
+        (session, id, title) => session.Book.get({ title })!.ref
+    ) as TestSelector;
+
+    const invalidSelector = createOrmSelector(
+        orm,
+        s => s.db,
+        s => s.foo,
+        (session, foo, missingArg) => foo // $ExpectError
+    ) as (state: RootState) => number;
+
+    const invalidSelector2 = createOrmSelector(
+        orm,
+        s => s.db,
+        s => s.foo,
+        (session, foo) => session.Book.filter({ title: foo }).at(0)!.ref // $ExpectError
+    ) as TestSelector;
+
+    const state = { db: orm.getEmptyState(), foo: 1, bar: 'foo' };
+
+    selector1(state); // $ExpectType Ref<Book>
+    selector2(state); // $ExpectType Ref<Book>
+    selector3(state); // $ExpectType Ref<Book>
+    selector4(state); // $ExpectType Ref<Book>
+    selector5(state); // $ExpectType Ref<Book>
+    selector6(state); // $ExpectType Ref<Book>
 })();

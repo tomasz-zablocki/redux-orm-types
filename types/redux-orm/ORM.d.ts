@@ -10,7 +10,7 @@ import Session, { OrmSession } from './Session';
  * - ORM branch state type
  */
 export type IndexedModelClasses<
-    T extends { [k in keyof T]: typeof AnyModel },
+    T extends { [k in keyof T]: typeof AnyModel } = {},
     K extends keyof T = Extract<keyof T, T[keyof T]['modelName']>
 > = { [k in K]: T[K] };
 
