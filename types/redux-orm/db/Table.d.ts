@@ -1,4 +1,4 @@
-import Model, { AnyModel, FieldSpecKeys, IdType, ModelClass, Ref } from '../Model';
+import Model, { AnyModel, FieldSpecKeys, IdType, ModelClass, Ref, SerializableObject } from '../Model';
 import { ForeignKey, OneToOne, TableOpts } from '../index';
 import { Field } from '../fields';
 
@@ -25,34 +25,32 @@ export interface TableOpts {
     readonly idAttribute?: string;
     readonly arrName?: string;
     readonly mapName?: string;
-    readonly fields?: { [K: string]: Field };
+    readonly fields?: SerializableObject;
 }
-export type UnBox<M extends { options: any }> = M['options'] extends () => infer R
-    ? R
-    : M['options'] extends infer R
-    ? R
+export type UnBox<MClass extends typeof AnyModel> = MClass['options'] extends () => infer R
+    ? (R extends TableOpts ? R : never)
+    : MClass['options'] extends infer R
+    ? (R extends TableOpts ? R : never)
     : never;
-
-/**
- * @internal
- */
-export type ExtractModelOption<
-    MClass extends typeof Model,
-    K extends keyof TableOpts,
-    DefaultValue extends string
-> = UnBox<MClass> extends { [P in K]: infer R } ? (R extends string ? R : never) : DefaultValue;
 
 /**
  * Unbox {@link Model#options} or fallback to default for others.
  *
  * @internal
  */
-export interface ModelTableOpts<MClass extends typeof AnyModel> {
-    readonly idAttribute: ExtractModelOption<MClass, 'idAttribute', 'id'>;
-    readonly arrName: ExtractModelOption<MClass, 'arrName', 'items'>;
-    readonly mapName: ExtractModelOption<MClass, 'mapName', 'itemsById'>;
-    readonly fields: MClass['fields'];
+export interface FallbackTableOpts {
+    idAttribute: 'id';
+    arrName: 'items';
+    mapName: 'itemsById';
 }
+
+export type ModelTableOpts<MClass extends typeof AnyModel> = {
+    [K in keyof FallbackTableOpts]: K extends keyof UnBox<MClass>
+        ? UnBox<MClass>[K] extends string
+            ? UnBox<MClass>[K]
+            : FallbackTableOpts[K]
+        : FallbackTableOpts[K]
+};
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
@@ -94,5 +92,5 @@ export type TableIndexes<M extends AnyModel> = {
 export type TableState<M extends AnyModel> = {
     readonly meta: DefaultMeta<IdType<M>>;
     readonly indexes: TableIndexes<M>;
-} & Record<ExtractModelOption<ModelClass<M>, 'arrName', 'items'>, ReadonlyArray<IdType<M>>> &
-    Record<ExtractModelOption<ModelClass<M>, 'mapName', 'itemsById'>, Record<string, Ref<M>>>;
+} & Record<ModelTableOpts<ModelClass<M>>['arrName'], ReadonlyArray<IdType<M>>> &
+    Record<ModelTableOpts<ModelClass<M>>['mapName'], Record<string, Ref<M>>>;

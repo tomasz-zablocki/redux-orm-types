@@ -1,5 +1,4 @@
-import { TableOpts } from './db';
-import { ExtractModelOption } from './db/Table';
+import { ModelTableOpts, TableOpts } from './db';
 import { Attribute, AttributeWithDefault, FieldSpecMap, ForeignKey, OneToOne } from './fields';
 import { HardOmit, HardOptional, HardPick, OptionalKeys, PickByValue } from './helpers';
 import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
@@ -378,7 +377,7 @@ export type CustomInstanceProps<M extends AnyModel, Props extends object> = Hard
  *
  * Falls back to `'id'` if not specified explicitly via {@link Model.options}.
  */
-export type IdKey<M extends AnyModel> = ExtractModelOption<ModelClass<M>, 'idAttribute', 'id'>;
+export type IdKey<M extends AnyModel> = ModelTableOpts<ModelClass<M>>['idAttribute'];
 
 /**
  * Model id property type extraction helper.
