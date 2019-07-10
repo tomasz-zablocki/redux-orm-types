@@ -1,5 +1,3 @@
-// import { createSchema } from './createSchema';
-// import { consoleLogger } from 'types-publisher';
 import Model, {
     attr,
     createSelector,
@@ -12,37 +10,6 @@ import Model, {
     QuerySet,
     Ref
 } from 'redux-orm';
-
-export class PersonQuestionAnswer extends Model<typeof PersonQuestionAnswer> {
-    id: string;
-    tempModelId: string;
-    AnswerId: string;
-    AnswerText: string;
-}
-export class AnswerOption extends Model<typeof AnswerOption> {
-    id: string;
-    tempModelId: string;
-    PersonQuestionAnswersByAnswer?: MutableQuerySet<PersonQuestionAnswer>;
-}
-
-export class QuestionGroup extends Model<typeof QuestionGroup> {
-    id: string;
-    Name: string;
-    Questionnaire: Questionnaire;
-    Questions?: MutableQuerySet<Question>;
-}
-
-export class Question extends Model<typeof Question> {
-    id: string;
-    tempModelId: string;
-    QuestionGroup: QuestionGroup;
-    AnswerOptions?: MutableQuerySet<AnswerOption>;
-}
-
-export class Questionnaire extends Model<typeof Questionnaire> {
-    Name: string;
-    QuestionGroups: MutableQuerySet<QuestionGroup>;
-}
 
 export class Book extends Model<typeof Book> {
     static modelName = 'Book';
