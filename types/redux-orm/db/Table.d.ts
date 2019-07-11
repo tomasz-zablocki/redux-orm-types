@@ -1,6 +1,13 @@
-import Model, { AnyModel, FieldSpecKeys, IdType, ModelClass, Ref, SerializableObject } from '../Model';
-import { ForeignKey, OneToOne, TableOpts } from '../index';
-import { Field } from '../fields';
+import Model, {
+    AnyModel,
+    FieldSpecKeys,
+    IdType,
+    InferModelOpts,
+    ModelOpts,
+    Ref,
+    Serializable
+} from '../Model';
+import { Field, ForeignKey, OneToOne } from '../fields';
 
 /**
  * {@link TableOpts} used for {@link Table} customization.
@@ -21,41 +28,14 @@ import { Field } from '../fields';
  *  @see {@link Model#options}
  *  @see {@link OrmState}
  */
-export interface TableOpts {
-    readonly idAttribute?: string;
-    readonly arrName?: string;
-    readonly mapName?: string;
-    readonly fields?: SerializableObject;
+export interface TableOpts extends ModelOpts {
+    readonly fields?: Record<string, Serializable>;
 }
-export type UnBox<MClass extends typeof AnyModel> = MClass['options'] extends () => infer R
-    ? (R extends TableOpts ? R : never)
-    : MClass['options'] extends infer R
-    ? (R extends TableOpts ? R : never)
-    : never;
-
-/**
- * Unbox {@link Model#options} or fallback to default for others.
- *
- * @internal
- */
-export interface FallbackTableOpts {
-    idAttribute: 'id';
-    arrName: 'items';
-    mapName: 'itemsById';
-}
-
-export type ModelTableOpts<MClass extends typeof AnyModel> = {
-    [K in keyof FallbackTableOpts]: K extends keyof UnBox<MClass>
-        ? UnBox<MClass>[K] extends string
-            ? UnBox<MClass>[K]
-            : FallbackTableOpts[K]
-        : FallbackTableOpts[K]
-};
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
  */
-export class Table<MClass extends typeof AnyModel> {
+export class Table<M extends Model> {
     /**
      * Creates a new {@link Table} instance.
      *
@@ -68,9 +48,9 @@ export class Table<MClass extends typeof AnyModel> {
      *                                                 map.
      * @param   [userOpts.fields=DefaultTableOpts.fields] - mapping of field key to {@link Field} object
      */
-    constructor(userOpts?: ModelTableOpts<MClass>);
+    constructor(userOpts?: InferModelOpts<M>);
 
-    getEmptyState(): TableState<InstanceType<MClass>>;
+    getEmptyState(): TableState<M>;
 }
 
 /**
@@ -89,8 +69,8 @@ export type TableIndexes<M extends AnyModel> = {
  *
  * Infers actual state of the ORM branch based on the {@link Model} class provided.
  */
-export type TableState<M extends AnyModel> = {
+export type TableState<M extends Model> = {
     readonly meta: DefaultMeta<IdType<M>>;
     readonly indexes: TableIndexes<M>;
-} & Record<ModelTableOpts<ModelClass<M>>['arrName'], ReadonlyArray<IdType<M>>> &
-    Record<ModelTableOpts<ModelClass<M>>['mapName'], Record<string, Ref<M>>>;
+} & Record<InferModelOpts<M>['arrName'], ReadonlyArray<IdType<M>>> &
+    Record<InferModelOpts<M>['mapName'], Record<string, Ref<M>>>;

@@ -3,9 +3,7 @@ import {
     createReducer,
     createSelector as createOrmSelector,
     fk,
-    IdKey,
     IdOrModelLike,
-    IdType,
     many,
     Model,
     ModelType,
@@ -13,6 +11,8 @@ import {
     ORM,
     OrmState,
     QuerySet,
+    IdKey,
+    IdType,
     Ref
 } from 'redux-orm';
 

@@ -2,9 +2,10 @@ import { QueryClause } from './db';
 import Model, {
     AnyModel,
     CustomInstanceProps,
-    IdOrModelLike, ModelClass,
+    IdOrModelLike,
+    ModelClass,
     Ref,
-    SerializableObject,
+    Serializable,
     SessionBoundModel,
     UpdateProps
 } from './Model';
@@ -55,7 +56,7 @@ export type LookupSpec<M extends AnyModel> = LookupProps<M> | LookupPredicate<M>
  */
 export type LookupResult<M extends AnyModel, TLookup extends LookupSpec<M>> = TLookup extends LookupPredicate<M>
     ? QuerySet<M>
-    : TLookup extends SerializableObject
+    : TLookup extends Record<string, Serializable>
     ? QuerySet<M, CustomInstanceProps<M, TLookup>>
     : never;
 
@@ -82,7 +83,7 @@ export type LookupResult<M extends AnyModel, TLookup extends LookupSpec<M>> = TL
  * QuerySet instances return copies, so chaining filters doesn't
  * mutate the previous instances.
  */
-export default class QuerySet<M extends AnyModel = any, InstanceProps extends SerializableObject = {}> {
+export default class QuerySet<M extends AnyModel = any, InstanceProps extends Record<string, Serializable> = {}> {
     /**
      * Creates a `QuerySet`. The constructor is mainly for internal use;
      * Access QuerySet instances from {@link Model}.
@@ -259,6 +260,6 @@ export interface ManyToManyExtensions<M extends AnyModel> {
 /**
  * A {@link QuerySet} extended with {@link ManyToMany} specific functionality - {@link ManyToManyExtensions}.
  */
-export interface MutableQuerySet<M extends AnyModel = any, InstanceProps extends SerializableObject = {}>
+export interface MutableQuerySet<M extends AnyModel = any, InstanceProps extends Record<string, Serializable> = {}>
     extends ManyToManyExtensions<M>,
         QuerySet<M, InstanceProps> {}

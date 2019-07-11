@@ -1,8 +1,8 @@
 import { IndexedModelClasses, OrmState } from '../ORM';
 import { CREATE, DELETE, EXCLUDE, FAILURE, FILTER, ORDER_BY, SUCCESS, UPDATE } from '../constants';
-import { ModelTableOpts, Table } from './Table';
+import { Table } from './Table';
 import { BatchToken } from '../Session';
-import { Serializable } from '../Model';
+import { InferModelOpts, Serializable } from '../Model';
 
 /**
  * A type of {@link QueryClause}.
@@ -84,7 +84,7 @@ export interface Transaction {
  * @see {@link Table}
  */
 export interface SchemaSpec<I extends IndexedModelClasses<any>> {
-    tables: { [K in keyof I]: ModelTableOpts<I[K]> };
+    tables: { [K in keyof I]: InferModelOpts<InstanceType<I[K]>> };
 }
 
 /**

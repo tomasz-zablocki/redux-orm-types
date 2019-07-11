@@ -1,10 +1,7 @@
-import { ModelTableOpts, TableOpts } from './db';
 import { Attribute, AttributeWithDefault, FieldSpecMap, ForeignKey, OneToOne } from './fields';
-import { HardOmit, HardOptional, HardPick, OptionalKeys, PickByValue } from './helpers';
+import { HardOmit, HardOptional, HardPick, ObjectAssign, OptionalKeys, PickByValue, UnBox } from './helpers';
 import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
 import { OrmSession } from './Session';
-import { IdType } from './index';
-
 /**
  * A primitive value
  */
@@ -22,29 +19,22 @@ export type Serializable =
       };
 
 /**
- * A union of supported model field types
- *
- * Specify foreign key and one-to-one association properties as Model typed properties.
- *
- * Specify many-to-many and reverse-fk associations as related Model's specification of:
- * - {@link MutableQuerySet} - for many-to-many relations
- * - {@link QuerySet} - for reverse side of foreign keys
- */
-export type ModelField = QuerySet | SessionBoundModel | Serializable;
-
-/**
- * Map of fields restriction to supported field types.
- */
-export interface ModelFieldMap {
-    [K: string]: ModelField;
-}
-
-/**
  * A Model-derived mapped type for supplying relations and alike.
  *
  * Either a primitive type matching Model's identifier type or an object implementing a `{ getId(): IdType<M> }` interface
  */
 export type IdOrModelLike<M extends Model> = IdType<M> | { getId(): IdType<M> };
+
+export interface ModelOpts {
+    readonly idAttribute?: string;
+    readonly arrName?: string;
+    readonly mapName?: string;
+}
+
+export type InferModelOpts<M extends Model> = ObjectAssign<
+    { idAttribute: 'id'; arrName: 'items'; mapName: 'itemsById' },
+    UnBox<ModelClass<M>['options']>
+>;
 
 /**
  * The heart of an ORM, the data model.
@@ -69,7 +59,7 @@ export default class Model<MClass extends typeof AnyModel = any> {
     /**
      * A string constant identifying specific Model, necessary to retain the shape of state and relations through transpilation steps
      */
-    static modelName: string;
+    static readonly modelName: string;
 
     /**
      * Model field descriptors.
@@ -78,7 +68,7 @@ export default class Model<MClass extends typeof AnyModel = any> {
      * @see {@link ForeignKey}
      * @see {@link ManyToMany}
      */
-    static fields: FieldSpecMap;
+    static readonly fields?: FieldSpecMap;
 
     /**
      * Returns the options object passed to the database for the table that represents
@@ -92,7 +82,7 @@ export default class Model<MClass extends typeof AnyModel = any> {
      * @return the options object passed to the database for the table
      *                  representing this Model class.
      */
-    static options: { (): TableOpts } | TableOpts;
+    static readonly options?: ModelOpts | (() => ModelOpts);
 
     /**
      * The key of Model's identifier property
@@ -326,7 +316,7 @@ export default class Model<MClass extends typeof AnyModel = any> {
      *
      * @param userMergeObj - an object that will be merged with this instance.
      */
-    update(userMergeObj: UpdateProps<InstanceType<MClass>>): void;
+    update(userMergeObj: UpdateProps<this>): void;
 
     /**
      * Updates {@link Model} instance attributes to reflect the
@@ -377,14 +367,14 @@ export type CustomInstanceProps<M extends AnyModel, Props extends object> = Hard
  *
  * Falls back to `'id'` if not specified explicitly via {@link Model.options}.
  */
-export type IdKey<M extends AnyModel> = ModelTableOpts<ModelClass<M>>['idAttribute'];
+export type IdKey<M extends Model> = InferModelOpts<M>['idAttribute'];
 
 /**
  * Model id property type extraction helper.
  *
  * Falls back to `number` if not specified explicitly via {@link Model.options}.
  */
-export type IdType<M extends Model> = IdKey<M> extends infer U ? (U extends keyof M ? M[U] : number) : number;
+export type IdType<M extends Model, MIdKey extends IdKey<M> = IdKey<M>> = MIdKey extends keyof M ? M[MIdKey] : number;
 
 export type RefFields<M extends AnyModel> = keyof HardPick<M, FieldSpecKeys<M, OneToOne | ForeignKey | Attribute>>;
 /**
@@ -449,7 +439,8 @@ export interface ModelType<M extends Model> extends QuerySet<M> {
  */
 export type ModelClass<M extends AnyModel> = ReturnType<M['getClass']>;
 
-export type CreateKeys<M extends AnyModel> = Extract<keyof M, MutableQuerySetKeys<M> | ModelClassFieldKeys<M>>;
+export type CreateKeys<M extends AnyModel> = Extract<keyof M, MutableQuerySetKeys<M> | keyof ModelClass<M>['fields']>;
+
 export type CreateProps<
     M extends AnyModel,
     Props extends HardPick<Required<ModelFields<M>>, CreateKeys<M>> = HardPick<Required<ModelFields<M>>, CreateKeys<M>>,
@@ -468,7 +459,7 @@ export type CreateProps<
 /**
  * @internal
  */
-export type ModelFields<M extends AnyModel> = Omit<M, keyof AnyModel>;
+export type ModelFields<M extends Model> = Omit<M, keyof Model>;
 
 /**
  * @internal
@@ -489,4 +480,3 @@ export type OptionalCreatePropsKeys<M extends AnyModel> = IdType<M> extends numb
     : (MutableQuerySetKeys<M> | OptionalKeys<ModelFields<M>> | FieldSpecKeys<M, AttributeWithDefault>);
 
 export type MutableQuerySetKeys<M extends AnyModel> = keyof PickByValue<Required<M>, MutableQuerySet>;
-export type ModelClassFieldKeys<M extends AnyModel> = keyof ModelClass<M>['fields'];
