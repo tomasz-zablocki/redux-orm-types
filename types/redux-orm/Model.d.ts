@@ -22,13 +22,6 @@ export type Serializable =
       };
 
 /**
- * Object restricted to serializable properties only
- */
-export interface SerializableMap {
-    [K: string]: Serializable | Serializable[];
-}
-
-/**
  * A union of supported model field types
  *
  * Specify foreign key and one-to-one association properties as Model typed properties.
@@ -51,7 +44,7 @@ export interface ModelFieldMap {
  *
  * Either a primitive type matching Model's identifier type or an object implementing a `{ getId(): IdType<M> }` interface
  */
-export type IdOrModelLike<M extends Model> = IdType<M> | {getId(): IdType<M>; };
+export type IdOrModelLike<M extends Model> = IdType<M> | { getId(): IdType<M> };
 
 /**
  * The heart of an ORM, the data model.
@@ -298,7 +291,7 @@ export default class Model<MClass extends typeof AnyModel = typeof AnyModel, Fie
      * Gets the id value of the current instance by looking up the id attribute.
      * @return The id value of the current instance.
      */
-    getId<Id extends Fields[IdAttribute<MClass>] = Fields[IdAttribute<MClass>]>(): Id extends undefined ? number: Id;
+    getId<Id extends Fields[IdAttribute<MClass>] = Fields[IdAttribute<MClass>]>(): Id extends undefined ? number : Id;
 
     /**
      * @return A string representation of this {@link Model} instance.
@@ -359,7 +352,7 @@ export class AnyModel extends Model {}
  * Relations can be provided in a flexible manner for both many-to-many and foreign key associations
  * @see {@link IdOrModelLike}
  */
-export type UpsertProps<M extends Model> = Overwrite<Partial<CreateProps<M>>, {[K in IdKey<M>]-?: IdType<M>}>;
+export type UpsertProps<M extends Model> = Overwrite<Partial<CreateProps<M>>, { [K in IdKey<M>]-?: IdType<M> }>;
 
 /**
  * {@link Model#update} argument type
@@ -403,7 +396,7 @@ export type IdType<M extends Model> = IdKey<M> extends infer U
  * Type of {@link Model.ref} / database entry for a particular Model type
  */
 export type Ref<M extends AnyModel> = {
-    [K in keyof RefFields<M>]: ModelFields<M>[K] extends AnyModel ? IdType<ModelFields<M>[K]> : RefFields<M>[K]
+    [K in keyof RefFields<M>]: ModelFields<M>[K] extends AnyModel ? IdType<ModelFields<M>[K]> : RefFields<M>[K];
 };
 
 /**
@@ -524,8 +517,8 @@ export type CreateProps<
                       ? never
                       : RFields[P] extends AnyModel
                       ? (P extends FieldSpecKeys<M, OneToOne | ForeignKey> ? IdOrModelLike<RFields[P]> : never)
-                      : RFields[P])
-        }[K]
+                      : RFields[P]);
+        }[K];
     },
     OptionalCreatePropsKeys<M>
 >;

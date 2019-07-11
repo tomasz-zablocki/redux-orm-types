@@ -380,6 +380,12 @@ const sessionFixture = () => {
 
     type TestSelector = (state: RootState) => Ref<Book>;
 
+    const selector0 = createOrmSelector(
+        orm,
+        s => s.db,
+        session => session.Book.first()!.ref
+    ) as TestSelector;
+
     const selector1 = createOrmSelector(
         orm,
         s => s.db,
@@ -453,6 +459,7 @@ const sessionFixture = () => {
 
     const state = { db: orm.getEmptyState(), foo: 1, bar: 'foo' };
 
+    selector0(state); // $ExpectType Ref<Book>
     selector1(state); // $ExpectType Ref<Book>
     selector2(state); // $ExpectType Ref<Book>
     selector3(state); // $ExpectType Ref<Book>
