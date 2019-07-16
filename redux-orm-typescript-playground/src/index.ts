@@ -18,13 +18,14 @@ export class Book extends Model<typeof Book> {
         id: attr(),
         name: attr(),
         author: fk('Person', 'books'),
-        related: many({ to: 'Person', relatedName: 'books2' })
+        relatedBooks: many({ to: 'Book', relatedName: 'relatingBooks' })
     };
 
     id: number;
     name: string;
     author: Person;
-    related: MutableQuerySet<Person>;
+    relatedBooks: MutableQuerySet<Book>;
+    relatingBooks: MutableQuerySet<Book>;
 }
 
 class Person extends Model<typeof Person> {
@@ -34,7 +35,7 @@ class Person extends Model<typeof Person> {
         firstName: attr(),
         lastName: attr(),
         nationality: attr(),
-        person: oneToOne('Person', 'self')
+        mentor: oneToOne('Person', 'student')
     };
     static options = {
         idAttribute: 'uid' as const
@@ -43,31 +44,31 @@ class Person extends Model<typeof Person> {
     firstName: string;
     lastName: string;
     nationality?: string;
-    person?: Person;
-    self: Person;
     books: QuerySet<Book>;
-    books2: MutableQuerySet<Book>;
+    mentor?: Person;
+    student?: Person;
 }
 
 const schema = { Book, Person };
 const orm = new ORM<typeof schema>();
 orm.register(Book, Person);
 const ormSession = orm.session(orm.getEmptyState());
-const sss = orm.session(orm.getEmptyState());
-const a = sss.Person.create({ uid: '10', aaasd: 'ass', lastName: 'vv', firstName: 'jan' });
-sss.Book.create({ name: 'aaa', author: a });
-sss.Book.create({ name: 'aaaa', author: a });
-sss.Book.create({ name: 'ddd', author: a });
-sss.Book.create({ name: 'd', author: a });
-sss.Book.all()
-    .toModelArray()
-    .map(({ ref, name, related }) => ({ id: ref.id, name, related: related.toRefArray().length }));
+
+ormSession.Person.create({ uid: 'p1', lastName: 'bar', firstName: 'foo', nationality: 'us' });
+const person = ormSession.Person.create({ uid: 'p2', customProp: 'foobar', lastName: 'foo', firstName: 'bar' });
+ormSession.Book.create({ name: 'book 1', author: person });
+ormSession.Book.create({ name: 'book 2', author: person });
+ormSession.Book.create({ name: 'book 3', author: person });
+ormSession.Book.create({ name: 'book 4', author: person });
+ormSession.Book.create({ name: 'book 5', author: person });
 
 interface RootState {
     db: OrmState<typeof schema>;
     foo: number;
     bar: string;
 }
+const state = { db: ormSession.state, foo: 1, bar: 'bar' };
+
 const selector: (state: RootState) => Ref<Book> = createSelector(
     orm,
     s => s.db,
@@ -75,12 +76,33 @@ const selector: (state: RootState) => Ref<Book> = createSelector(
     s => s.bar,
     (session, foo, bar) => ({ ...session.Book.first()!.ref, foo, bar })
 );
-ormSession.Book.create({ author: a, id: 4, name: 'asd' });
-ormSession.Person.create({ uid: 'ss', lastName: 'asd', firstName: 'asd', person: a, nationality: 'pl' });
-selector({ db: ormSession.state, foo: 1, bar: 'a' });
+
+selector(state);
+
 const selector2 = createSelector(
     orm,
-    session => session.Person.all().toRefArray()
+    session =>
+        session.Person.all()
+            .toModelArray()
+            .map(({ firstName, lastName, nationality, mentor }) => ({
+                firstName,
+                lastName,
+                nationality,
+                mentorUid: mentor ? mentor.uid : ''
+            }))
 );
 
 selector2(ormSession.state);
+
+const selector3: (state: RootState) => [Ref<Person>, number[]] = createSelector(
+    orm,
+    s => s.db,
+    session => [
+        session.Book.first()!.author.ref,
+        session.Book.first()!
+            .relatedBooks.toRefArray()
+            .map(b => b.id)
+    ]
+);
+
+selector3(state);

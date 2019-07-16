@@ -362,6 +362,11 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.0.10.tgz#51babf9c7deadd5343620055fc8aff7995c8b031"
   integrity sha512-LcsGbPomWsad6wmMNv7nBLw7YYYyfdYcz6xryKYQhx89c3XXan+8Q6AJ43G5XDIaklaVkK3mE4fCb0SBvMiPSQ==
 
+"@types/redux-orm@^0.13.2":
+  version "0.13.2"
+  resolved "https://registry.yarnpkg.com/@types/redux-orm/-/redux-orm-0.13.2.tgz#d629420c71de165a942a018f8fb10fc4b1106ec2"
+  integrity sha512-c6Fhi0oCFQMcM8t+AkIeZiEzbwcKk5FsVNN0h1xk7DiV/2/JzanwSzWc1sXq3hGxAeNuUq0lt2fRK993mK5UXQ==
+
 "@types/stack-utils@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-1.0.1.tgz#0a851d3bd96498fa25c33ab7278ed3bd65f06c3e"

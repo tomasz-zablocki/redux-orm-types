@@ -112,7 +112,7 @@ export default class Model<MClass extends typeof AnyModel = any> {
      * Don't use this to create a new record; Use the static method {@link Model#create}.
      * @param props - the properties to instantiate with
      */
-    constructor(props: object);
+    constructor(props: { [K: string]: Serializable | QuerySet | Model });
 
     /**
      * Model specific reducer function.
@@ -402,12 +402,22 @@ export type RefPropOrSimple<M extends Model, K extends string> = K extends keyof
 export type SessionBoundModel<M extends AnyModel = any, InstanceProps extends object = {}> = M &
     CustomInstanceProps<M, InstanceProps>;
 
+export type ModelTypeQuerySetMethods = 'all'
+|'at'
+|'first'
+|'last'
+|'filter'
+|'exclude'
+|'orderBy'
+|'count'
+|'exists'|'update';
+
 /**
  * Static side of a particular {@link Model} with member signatures narrowed to provided {@link Model} type
  *
  * @inheritDoc
  */
-export interface ModelType<M extends Model> extends QuerySet<M> {
+export type ModelType<M extends Model> = Pick<QuerySet<M>, ModelTypeQuerySetMethods> & {
     /**
      * @see {@link Model#idExists}
      */
@@ -432,7 +442,7 @@ export interface ModelType<M extends Model> extends QuerySet<M> {
      * @see {@link Model#upsert}
      */
     upsert<TProps extends UpsertProps<M>>(props: TProps): SessionBoundModel<M, TProps>;
-}
+};
 
 /**
  * @internal
