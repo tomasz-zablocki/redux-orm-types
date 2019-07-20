@@ -8,6 +8,10 @@
     "typings",
     "static typing"
   ],
+  "files": [
+    "*.d.ts",
+    "db/*"
+  ],
   "dependencies": {
   },
   "author": {
@@ -37,8 +41,8 @@
   },
   "scripts": {
     "clean": "rimraf ./*.d.ts ./db",
-    "dist": "cpy **/*.d.ts ../.. --cwd=types/redux-orm --parents",
-    "prepare": "npm run clean && npm run dist",
+    "build": "cpy **/*.d.ts ../.. --cwd=types/redux-orm --parents",
+    "prepare": "npm run build",
     "test": "dtslint types redux-orm"
   }
 }
