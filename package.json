@@ -8,6 +8,10 @@
     "typings",
     "static typing"
   ],
+  "files": [
+    "*.d.ts",
+    "db/*"
+  ],
   "dependencies": {
   },
   "author": {
