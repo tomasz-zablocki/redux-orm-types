@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/@types/redux-orm.svg?color=green&style=popout-square)](https://www.npmjs.com/package/@types/redux-orm)
 [![license](https://img.shields.io/github/license/tomasz-zablocki/redux-orm-types.svg?color=orange&style=flat-square)](https://github.com/tomasz-zablocki/redux-orm-types/blob/master/LICENSE)
 [![Build Status](https://travis-ci.org/tomasz-zablocki/redux-orm-types.svg?branch=master)](https://travis-ci.org/tomasz-zablocki/redux-orm-types)
-[![GitHub issues](https://img.shields.io/github/issues/tomasz-zablocki/redux-orm-types.svg?color=darkmagenta&style=flat-square)
+![GitHub issues](https://img.shields.io/github/issues/tomasz-zablocki/redux-orm-types.svg?color=darkmagenta&style=flat-square)
 
 [Redux-ORM Types](https://www.npmjs.com/package/@types/redux-orm) development project, type declaration experiments and alike.
 
