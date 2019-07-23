@@ -15,5 +15,5 @@ Leave an issue and I'll try to address it as soon as possible.**
 
 There are two parallel projects, one is related to type maintenance of current DT package. The other one is for new features improvements and for maintaining sync with the original library. 
 
-### [Current release](https://github.com/users/tomasz-zablocki/projects/1)
-### [Development](https://github.com/users/tomasz-zablocki/projects/2)
+### [Board: release support](https://github.com/users/tomasz-zablocki/projects/1)
+### [Board: development](https://github.com/users/tomasz-zablocki/projects/2)

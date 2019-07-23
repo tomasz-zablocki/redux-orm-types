@@ -1,43 +1,47 @@
 {
-  "name": "redux-orm-typings",
-  "version": "0.13.2",
+  "name": "redux-orm-types",
+  "version": "0.13.4",
   "description": "Redux-ORM typings development project, type declaration experiments and alike",
   "keywords": [
     "redux-orm",
     "typescript",
     "typings",
+    "types",
     "static typing"
   ],
-  "dependencies": {
-    "@babel/plugin-proposal-class-properties": "^7.4.4",
-    "jsdoc": "^3.6.2",
-    "utility-types": "^3.7.0"
-  },
+  "files": [
+    "*.d.ts",
+    "db/*"
+  ],
+  "dependencies": {},
   "author": {
     "name": "Tomasz Zabłocki",
     "email": "tomasz.zablocki@gmail.com"
   },
   "license": "MIT",
   "devDependencies": {
-    "@babel/cli": "^7.4.4",
-    "@babel/core": "^7.4.5",
-    "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
-    "@babel/preset-env": "^7.4.5",
-    "@babel/preset-typescript": "^7.3.3",
     "@types/node": "^12.0.3",
+    "cpy-cli": "^2.0.0",
     "dtslint": "latest",
+    "mkdirp": "^0.5.1",
     "prettier": "^1.17.1",
+    "rimraf": "^2.6.3",
     "ts-node": "^8.2.0",
     "tslint": "^5.17.0",
-    "tsutils": "^3.14.0",
     "types-publisher": "github:Microsoft/types-publisher#production",
-    "typescript": "latest"
+    "typescript": "next"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tomasz-zablocki/redux-orm-typings.git"
+    "url": "github:tomasz-zablocki/redux-orm-types"
+  },
+  "bugs": {
+    "url": "https://github.com/tomasz-zablocki/redux-orm-types/issues"
   },
   "scripts": {
+    "clean": "rimraf ./*.d.ts ./db",
+    "build": "cpy **/*.d.ts ../.. --cwd=types/redux-orm --parents",
+    "prepare": "npm run build",
     "test": "dtslint types redux-orm"
   }
 }
