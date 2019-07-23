@@ -2,7 +2,7 @@ import { ModelTableOpts, TableOpts } from './db';
 import { IdAttribute } from './db/Table';
 import { AttributeWithDefault, FieldSpecMap, ForeignKey, ManyToMany, OneToOne } from './fields';
 import { Optional, OptionalKeys, Overwrite, PickByValue } from './helpers';
-import QuerySet, { LookupSpec, MutableQuerySet, SortIteratee, SortOrder } from './QuerySet';
+import QuerySet, { MutableQuerySet } from './QuerySet';
 import { OrmSession } from './Session';
 
 /**
@@ -44,7 +44,7 @@ export interface ModelFieldMap {
  *
  * Either a primitive type matching Model's identifier type or an object implementing a `{ getId(): IdType<M> }` interface
  */
-export type IdOrModelLike<M extends Model> = IdType<M> | { getId(): IdType<M> };
+export type IdOrModelLike<M extends Model> = IdType<M> | M;
 
 /**
  * The heart of an ORM, the data model.
@@ -169,9 +169,7 @@ export default class Model<MClass extends typeof AnyModel = typeof AnyModel, Fie
      * @throws {Error} If more than one entity matches the properties in `lookupObj`.
      * @return a {@link SessionBoundModel} instance that matches the properties in `lookupObj`.
      */
-    static get<M extends AnyModel, TProps extends LookupSpec<M>>(
-        lookupObj: TProps
-    ): SessionBoundModel<M, TProps> | null;
+    static get<M extends AnyModel>(lookupObj: QuerySet.LookupSpec<M>): SessionBoundModel<M> | null;
 
     /**
      * Returns a {@link Model} instance for the object with id `id`.
@@ -226,7 +224,7 @@ export default class Model<MClass extends typeof AnyModel = typeof AnyModel, Fie
     /**
      * @see {@link QuerySet.all}
      */
-    static all<M extends AnyModel>(this: ModelType<M>): QuerySet<M>;
+    static all(): QuerySet;
 
     /**
      * @see {@link QuerySet.at}
@@ -251,17 +249,20 @@ export default class Model<MClass extends typeof AnyModel = typeof AnyModel, Fie
     /**
      * @see {@link QuerySet.filter}
      */
-    static filter(props: LookupSpec<Model>): QuerySet;
+    static filter(props: QuerySet.LookupSpec<Model>): QuerySet;
 
     /**
      * @see {@link QuerySet.exclude}
      */
-    static exclude(props: LookupSpec<Model>): QuerySet;
+    static exclude(props: QuerySet.LookupSpec<Model>): QuerySet;
 
     /**
      * @see {@link QuerySet.orderBy}
      */
-    static orderBy(iteratees: ReadonlyArray<SortIteratee<Model>>, orders?: ReadonlyArray<SortOrder>): QuerySet;
+    static orderBy(
+        iteratees: ReadonlyArray<QuerySet.SortIteratee<Model>>,
+        orders?: ReadonlyArray<QuerySet.SortOrder>
+    ): QuerySet;
 
     /**
      * @see {@link QuerySet.count}
@@ -269,9 +270,13 @@ export default class Model<MClass extends typeof AnyModel = typeof AnyModel, Fie
     static count(): number;
 
     /**
-     * @see {@link QuerySet.exists}
+     * Returns a boolean indicating if an entity
+     * with the given props exists in the state.
+     *
+     * @param  props - a key-value that {@link Model} instances should have to be considered as existing.
+     * @return a boolean indicating if entity with `props` exists in the state
      */
-    static exists(): boolean;
+    static exists(props: Partial<Ref<Model>>): boolean;
 
     /**
      * @see {@link QuerySet.delete}
@@ -427,9 +432,7 @@ export type SessionBoundModel<M extends Model = any, InstanceProps extends objec
  *
  * @inheritDoc
  */
-export interface ModelType<M extends AnyModel> extends QuerySet<M> {
-    new (props: ModelFields<M>): SessionBoundModel<M>;
-
+export interface ModelType<M extends AnyModel> extends QuerySet.QueryBuilder<M> {
     options: ModelTableOpts<ModelClass<M>>;
 
     modelName: ModelClass<M>['modelName'];
@@ -442,6 +445,11 @@ export interface ModelType<M extends AnyModel> extends QuerySet<M> {
     idExists(id: IdType<M>): boolean;
 
     /**
+     * @see {@link Model#exists}
+     */
+    exists(props: QuerySet.LookupProps<M>): boolean;
+
+    /**
      * @see {@link Model#withId}
      */
     withId(id: IdType<M>): SessionBoundModel<M> | null;
@@ -449,7 +457,7 @@ export interface ModelType<M extends AnyModel> extends QuerySet<M> {
     /**
      * @see {@link Model#get}
      */
-    get<TLookup extends LookupSpec<M>>(lookupSpec: TLookup): SessionBoundModel<M, TLookup> | null;
+    get(lookupSpec: QuerySet.LookupSpec<M>): SessionBoundModel<M> | null;
 
     /**
      * @see {@link Model#create}

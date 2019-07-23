@@ -380,11 +380,7 @@ const sessionFixture = () => {
 
     type TestSelector = (state: RootState) => Ref<Book>;
 
-    const selector0 = createOrmSelector(
-        orm,
-        s => s.db,
-        session => session.Book.first()!.ref
-    ) as TestSelector;
+    const selector0 = createOrmSelector(orm, s => s.db, session => session.Book.first()!.ref) as TestSelector;
 
     const selector1 = createOrmSelector(
         orm,
@@ -466,4 +462,26 @@ const sessionFixture = () => {
     selector4(state); // $ExpectType Ref<Book>
     selector5(state); // $ExpectType Ref<Book>
     selector6(state); // $ExpectType Ref<Book>
+})();
+
+// redux-orm-types#7
+(() => {
+    const { Book } = sessionFixture();
+
+    Book.exists({ title: 'foo' });
+    Book.all().exists();
+
+    Book.exists(); // $ExpectError
+    Book.exists('foo'); // $ExpectError
+    Book.all().exists({}); // $ExpectError
+})();
+
+// redux-orm-types#8
+(() => {
+    const { Book } = sessionFixture();
+
+    Book.all().toModelArray();
+    Book.all().toRefArray();
+    Book.toModelArray(); // $ExpectError
+    Book.toRefArray(); // $ExpectError
 })();
