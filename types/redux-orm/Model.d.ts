@@ -1,9 +1,8 @@
-import { ModelTableOpts, TableOpts } from './db';
+import { TableOpts } from './db';
 import { IdAttribute } from './db/Table';
 import { AttributeWithDefault, FieldSpecMap, ForeignKey, ManyToMany, OneToOne } from './fields';
 import { KnownKeys, OptionalKeys, PickByValue } from './helpers';
 import QuerySet, { MutableQuerySet } from './QuerySet';
-import { OrmSession } from './Session';
 
 /**
  * A primitive value
@@ -65,7 +64,7 @@ export type IdOrModelLike<M extends Model> = IdType<M> | { getId(): IdType<M> };
  * logic by defining prototype methods (without `static` keyword).
  * @borrows {@link QuerySet.filter} as Model#filter
  */
-export default class Model<MClass extends typeof AnyModel = typeof AnyModel, Fields extends ModelFieldMap = any> {
+export class Model<MClass extends typeof AnyModel = typeof AnyModel, Fields extends ModelFieldMap = any> {
     /**
      * A string constant identifying specific Model, necessary to retain the shape of state and relations through transpilation steps
      */
@@ -108,7 +107,7 @@ export default class Model<MClass extends typeof AnyModel = typeof AnyModel, Fie
     /**
      * @see {@link Model.getQuerySet}
      */
-    static readonly query: QuerySet;
+    static query: QuerySet;
     /**
      * Returns a reference to the plain JS object in the store.
      * Make sure to not mutate this.
@@ -123,165 +122,6 @@ export default class Model<MClass extends typeof AnyModel = typeof AnyModel, Fie
      * @param props - the properties to instantiate with
      */
     constructor(props: Fields);
-
-    /**
-     * Model specific reducer function.
-     *
-     * An alternative to standalone reducer function.
-     *
-     * @see {@link createReducer}
-     *
-     * @param action  - store-dispatched action instance
-     * @param modelType - a {@link ModelType} parametrized with a
-     *                      {@link Model} type that the reducer is being attached to.
-     * @param session - an optional parameter, can be used for querying other Models (mutations are not supported)
-     */
-    static reducer(action: any, modelType: ModelType<any>, session: OrmSession<any>): void;
-
-    /**
-     * Creates a new record in the database, instantiates a {@link Model} and returns it.
-     *
-     * If you pass values for many-to-many fields, instances are created on the through
-     * model as well.
-     *
-     * @param  userProps - the new {@link Model}'s properties.
-     * @return a new {@link SessionBoundModel} instance.
-     */
-    static create<M extends AnyModel, TProps extends CreateProps<M>>(userProps: TProps): SessionBoundModel<M, TProps>;
-
-    /**
-     * Creates a new or update existing record in the database, instantiates a {@link Model} and returns it.
-     *
-     * If you pass values for many-to-many fields, instances are created on the through
-     * model as well.
-     *
-     * @param  userProps - the upserted {@link Model}'s properties.
-     * @return a {@link SessionBoundModel} instance.
-     */
-    static upsert<M extends AnyModel, TProps extends UpsertProps<M>>(userProps: TProps): SessionBoundModel<M, TProps>;
-
-    /**
-     * Gets the {@link Model} instance that matches properties in `lookupObj`.
-     * Throws an error if {@link Model} if multiple records match
-     * the properties.
-     *
-     * @param  lookupObj - the properties used to match a single entity.
-     * @throws {Error} If more than one entity matches the properties in `lookupObj`.
-     * @return a {@link SessionBoundModel} instance that matches the properties in `lookupObj`.
-     */
-    static get<M extends AnyModel>(lookupObj: QuerySet.LookupSpec<M>): SessionBoundModel<M> | null;
-
-    /**
-     * Returns a {@link Model} instance for the object with id `id`.
-     * Returns `null` if the model has no instance with id `id`.
-     *
-     * You can use {@link Model#idExists} to check for existence instead.
-     *
-     * @param  id - the `id` of the object to get
-     * @return a {@link SessionBoundModel} instance with id `id`
-     */
-    static withId<M extends AnyModel>(id: IdType<M>): SessionBoundModel<M> | null;
-
-    /**
-     * Returns a boolean indicating if an entity
-     * with the id `id` exists in the state.
-     *
-     * @param   id - a value corresponding to the id attribute of the {@link Model} class.
-     * @return a boolean indicating if entity with `id` exists in the state
-     *
-     * @since 0.11.0
-     */
-    static idExists(id: string | number): boolean;
-
-    /**
-     * @return A string representation of this {@link Model} class.
-     */
-    static toString(): string;
-
-    /**
-     * Manually mark individual instances as accessed.
-     * This allows invalidating selector memoization within mutable sessions.
-     *
-     * @param ids - Array of primary key values
-     */
-    static markAccessed(ids: Array<string | number>): void;
-
-    /**
-     * Manually mark this model's table as scanned.
-     * This allows invalidating selector memoization within mutable sessions.
-     *
-     */
-    static markFullTableScanned(): void;
-
-    /**
-     * Returns an instance of the model's `querySetClass` field.
-     * By default, this will be an empty {@link QuerySet}.
-     *
-     * @return An instance of the model's `querySetClass`.
-     */
-    static getQuerySet(): QuerySet;
-
-    /**
-     * @see {@link QuerySet.all}
-     */
-    static all(): QuerySet;
-
-    /**
-     * @see {@link QuerySet.at}
-     */
-    static at(index: number): SessionBoundModel | undefined;
-
-    /**
-     * @see {@link QuerySet.first}
-     */
-    static first(): SessionBoundModel | undefined;
-
-    /**
-     * @see {@link QuerySet.last}
-     */
-    static last(): SessionBoundModel | undefined;
-
-    /**
-     * @see {@link QuerySet.update}
-     */
-    static update(props: UpdateProps<Model>): void;
-
-    /**
-     * @see {@link QuerySet.filter}
-     */
-    static filter(props: QuerySet.LookupSpec<Model>): QuerySet;
-
-    /**
-     * @see {@link QuerySet.exclude}
-     */
-    static exclude(props: QuerySet.LookupSpec<Model>): QuerySet;
-
-    /**
-     * @see {@link QuerySet.orderBy}
-     */
-    static orderBy(
-        iteratees: ReadonlyArray<QuerySet.SortIteratee<Model>>,
-        orders?: ReadonlyArray<QuerySet.SortOrder>
-    ): QuerySet;
-
-    /**
-     * @see {@link QuerySet.count}
-     */
-    static count(): number;
-
-    /**
-     * Returns a boolean indicating if an entity
-     * with the given props exists in the state.
-     *
-     * @param  props - a key-value that {@link Model} instances should have to be considered as existing.
-     * @return a boolean indicating if entity with `props` exists in the state
-     */
-    static exists(props: Partial<Ref<Model>>): boolean;
-
-    /**
-     * @see {@link QuerySet.delete}
-     */
-    static delete(): void;
 
     /**
      * Gets the {@link Model} class or subclass constructor (the class that
@@ -344,6 +184,162 @@ export default class Model<MClass extends typeof AnyModel = typeof AnyModel, Fie
      * Fields and values on the instance are still accessible after the call.
      */
     delete(): void;
+
+    /**
+     * @see {@link QuerySet.delete}
+     */
+    static delete(): void;
+}
+
+export namespace Model {
+    type MCtor<M extends Model> = new (...args: any[]) => M;
+
+    /**
+     * Creates a new record in the database, instantiates a {@link Model} and returns it.
+     *
+     * If you pass values for many-to-many fields, instances are created on the through
+     * model as well.
+     *
+     * @param  props - the new {@link Model}'s properties.
+     * @return a new {@link SessionBoundModel} instance.
+     */
+    function create<M extends AnyModel, TProps extends CreateProps<M>>(
+        this: MCtor<M>,
+        props: TProps
+    ): SessionBoundModel<M, CustomInstanceProps<M, TProps>>;
+
+    /**
+     * Creates a new or update existing record in the database, instantiates a {@link Model} and returns it.
+     *
+     * If you pass values for many-to-many fields, instances are created on the through
+     * model as well.
+     *
+     * @param  props - the upserted {@link Model}'s properties.
+     * @return a {@link SessionBoundModel} instance.
+     */
+    function upsert<M extends AnyModel, TProps extends UpsertProps<M>>(
+        this: MCtor<M>,
+        props: TProps
+    ): SessionBoundModel<M, CustomInstanceProps<M, TProps>>;
+
+    /**
+     * Gets the {@link Model} instance that matches properties in `lookupObj`.
+     * Throws an error if {@link Model} if multiple records match
+     * the properties.
+     *
+     * @param  lookupSpec - the properties used to match a single entity.
+     * @throws {Error} If more than one entity matches the properties in `lookupObj`.
+     * @return a {@link SessionBoundModel} instance that matches the properties in `lookupObj`.
+     */
+    function get<M extends AnyModel>(this: MCtor<M>, lookupSpec: QuerySet.LookupSpec<M>): SessionBoundModel<M> | null;
+
+    /**
+     * Returns a {@link Model} instance for the object with id `id`.
+     * Returns `null` if the model has no instance with id `id`.
+     *
+     * You can use {@link Model#idExists} to check for existence instead.
+     *
+     * @param  id - the `id` of the object to get
+     * @return a {@link SessionBoundModel} instance with id `id`
+     */
+    function withId<M extends AnyModel>(this: MCtor<M>, id: IdType<M>): SessionBoundModel<M> | null;
+
+    /**
+     * Returns a boolean indicating if an entity
+     * with the id `id` exists in the state.
+     *
+     * @param   id - a value corresponding to the id attribute of the {@link Model} class.
+     * @return a boolean indicating if entity with `id` exists in the state
+     *
+     * @since 0.11.0
+     */
+    function idExists<M extends AnyModel>(this: MCtor<M>, id: IdType<M>): boolean;
+
+    /**
+     * @return A string representation of this {@link Model} class.
+     */
+    function toString(): string;
+
+    /**
+     * Manually mark individual instances as accessed.
+     * This allows invalidating selector memoization within mutable sessions.
+     *
+     * @param ids - Array of primary key values
+     */
+    function markAccessed(ids: Array<string | number>): void;
+
+    /**
+     * Manually mark this model's table as scanned.
+     * This allows invalidating selector memoization within mutable sessions.
+     *
+     */
+    function markFullTableScanned(): void;
+
+    /**
+     * Returns an instance of the model's `querySetClass` field.
+     * By default, this will be an empty {@link QuerySet}.
+     *
+     * @return An instance of the model's `querySetClass`.
+     */
+    function getQuerySet<M extends AnyModel>(this: MCtor<M>): QuerySet<M>;
+
+    /**
+     * @see {@link QuerySet.all}
+     */
+    function all<M extends AnyModel>(this: MCtor<M>): QuerySet<M>;
+
+    /**
+     * @see {@link QuerySet.at}
+     */
+    function at<M extends AnyModel>(this: MCtor<M>, index: number): SessionBoundModel<M> | undefined;
+
+    /**
+     * @see {@link QuerySet.first}
+     */
+    function first<M extends AnyModel>(this: MCtor<M>): SessionBoundModel<M> | undefined;
+
+    /**
+     * @see {@link QuerySet.last}
+     */
+    function last<M extends AnyModel>(this: MCtor<M>): SessionBoundModel<M> | undefined;
+
+    /**
+     * @see {@link QuerySet.update}
+     */
+    function update<M extends AnyModel>(this: MCtor<M>, props: UpdateProps<M>): void;
+
+    /**
+     * @see {@link QuerySet.filter}
+     */
+    function filter<M extends AnyModel>(this: MCtor<M>, props: QuerySet.LookupSpec<M>): QuerySet<M>;
+
+    /**
+     * @see {@link QuerySet.exclude}
+     */
+    function exclude<M extends AnyModel>(this: MCtor<M>, props: QuerySet.LookupSpec<M>): QuerySet<M>;
+
+    /**
+     * @see {@link QuerySet.orderBy}
+     */
+    function orderBy<M extends AnyModel>(
+        this: MCtor<M>,
+        iteratees: ReadonlyArray<QuerySet.SortIteratee<M>>,
+        orders?: ReadonlyArray<QuerySet.SortOrder>
+    ): QuerySet<M>;
+
+    /**
+     * @see {@link QuerySet.count}
+     */
+    function count(): number;
+
+    /**
+     * Returns a boolean indicating if an entity
+     * with the given props exists in the state.
+     *
+     * @param  props - a key-value that {@link Model} instances should have to be considered as existing.
+     * @return a boolean indicating if entity with `props` exists in the state
+     */
+    function exists<M extends AnyModel>(this: MCtor<M>, props: QuerySet.LookupProps<M>): boolean;
 }
 
 /**
@@ -415,51 +411,6 @@ export type RefPropOrSimple<M extends AnyModel, K extends string> = K extends ke
 export type SessionBoundModel<M extends Model = any, InstanceProps extends object = {}> = M &
     { [K in keyof ModelFields<M>]: SessionBoundModelField<M, K> } &
     InstanceProps;
-
-/**
- * Static side of a particular {@link Model} with member signatures narrowed to provided {@link Model} type
- *
- * @template M a model type narrowing static {@link Model} member signatures.
- *
- * @inheritDoc
- */
-export interface ModelType<M extends AnyModel> extends QuerySet.QueryBuilder<M> {
-    options: ModelTableOpts<ModelClass<M>>;
-
-    modelName: ModelClass<M>['modelName'];
-
-    fields: ModelClass<M>['fields'];
-
-    /**
-     * @see {@link Model#idExists}
-     */
-    idExists(id: IdType<M>): boolean;
-
-    /**
-     * @see {@link Model#exists}
-     */
-    exists(props: QuerySet.LookupProps<M>): boolean;
-
-    /**
-     * @see {@link Model#withId}
-     */
-    withId(id: IdType<M>): SessionBoundModel<M> | null;
-
-    /**
-     * @see {@link Model#get}
-     */
-    get(lookupSpec: QuerySet.LookupSpec<M>): SessionBoundModel<M> | null;
-
-    /**
-     * @see {@link Model#create}
-     */
-    create<T extends CreateProps<M>>(props: T): SessionBoundModel<M, CustomInstanceProps<M, T>>;
-
-    /**
-     * @see {@link Model#upsert}
-     */
-    upsert<T extends UpsertProps<M>>(props: T): SessionBoundModel<M, CustomInstanceProps<M, T>>;
-}
 
 /**
  * @internal
@@ -548,3 +499,5 @@ export type CreateProps<
 export type UpsertProps<M extends AnyModel> = BlueprintProps<M, IdKey<M>, Exclude<keyof ModelBlueprint<M>, IdKey<M>>>;
 
 export type UpdateProps<M extends AnyModel> = BlueprintProps<M, never, Exclude<keyof ModelBlueprint<M>, IdKey<M>>>;
+
+export default Model;
