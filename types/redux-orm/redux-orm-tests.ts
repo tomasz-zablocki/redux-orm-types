@@ -30,7 +30,7 @@ interface BookFields {
     title: string;
     coverArt: string;
     publisher: Publisher;
-    authors?: MutableQuerySet<Person>;
+    authors: MutableQuerySet<Person>;
 }
 
 class Book extends Model<typeof Book, BookFields> {
@@ -63,7 +63,7 @@ interface PersonFields {
     firstName: string;
     lastName: string;
     nationality?: string;
-    books?: MutableQuerySet<Book>;
+    books: MutableQuerySet<Book>;
 }
 
 class Person extends Model<typeof Person, PersonFields> {
@@ -198,7 +198,7 @@ const sessionFixture = () => {
     /** Upsert requires id to be provided */
     Book.upsert({ publisher: 1 }); // $ExpectError
 
-    // $ExpectType SessionBoundModel<Book, { title: string; publisher: number; }>
+    // $ExpectType SessionBoundModel<Book, Pick<{ title: string; publisher: number; }, never>>
     Book.upsert({ title: 'B1', publisher: 1 });
 
     /* Incompatible property types: */
@@ -274,7 +274,7 @@ const sessionFixture = () => {
 
     type basicBookKeys = Exclude<keyof typeof basicBook, keyof Model>; // $ExpectType "title" | "coverArt" | "publisher" | "authors"
     const basicBookTitle = basicBook.title; // $ExpectType string
-    const authors = basicBook.authors; // $ExpectType MutableQuerySet<Person, {}> | undefined
+    const authors = basicBook.authors; // $ExpectType MutableQuerySet<Person, {}>
     const unknownPropertyError = basicBook.customProp; // $ExpectError
 
     const customProp = { foo: 0, bar: true };
@@ -484,4 +484,19 @@ const sessionFixture = () => {
     Book.all().toRefArray();
     Book.toModelArray(); // $ExpectError
     Book.toRefArray(); // $ExpectError
+})();
+
+// redux-orm-types#9
+(() => {
+    const { Book, Person, Publisher } = sessionFixture();
+
+    const author = Person.create({ id: '1', firstName: 'foo', lastName: 'bar', nationality: 'pl' });
+    const publisher = Publisher.create({ name: 'foo' });
+    Book.create({ title: 'foo', publisher: 1 });
+    Book.create({ title: 'foo', publisher: 1, coverArt: 'bar' });
+    Book.create({ title: 'foo', publisher, coverArt: 'bar', authors: ['foo', author] });
+
+    Book.create({ title: 'foo', publisher: author }); // $ExpectError
+    Book.create({ title: 'foo', publisher: 'error' }); // $ExpectError
+    Book.create({ title: 'foo', publisher, coverArt: 'bar', authors: [3, author] }); // $ExpectError
 })();
