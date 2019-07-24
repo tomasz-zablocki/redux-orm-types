@@ -6,7 +6,6 @@ import {
     IdType,
     many,
     Model,
-    ModelType,
     MutableQuerySet,
     ORM,
     OrmState,
@@ -44,13 +43,13 @@ class Book extends Model<typeof Book, BookFields> {
     static options = {
         idAttribute: 'title' as const
     };
-    static reducer(action: RootAction, Book: ModelType<Book>) {
+    static reducer(action: RootAction, book: typeof Book) {
         switch (action.type) {
             case 'CREATE_BOOK':
-                Book.create(action.payload);
+                book.create(action.payload);
                 break;
             case 'DELETE_BOOK':
-                Book.filter(book => book.title === action.payload.title).delete();
+                book.filter(book => book.title === action.payload.title).delete();
                 break;
             default:
                 break;
@@ -125,7 +124,7 @@ const sessionFixture = () => {
     return orm.session(orm.getEmptyState());
 };
 
-// argOptionalityAtModelCreation - inferred optionality of ModelType.create argument properties
+// argOptionalityAtModelCreation - inferred optionality of Model.create argument properties
 (() => {
     const { Book, Publisher } = sessionFixture();
 
@@ -153,7 +152,7 @@ const sessionFixture = () => {
     Book.create({ title: 'B1', publisher: 1, coverArt: 'foo.bmp' });
 })();
 
-// argPropertyTypeRestrictionsOnCreate - ModelFields contribute to type constraints within ModelType.create arguments
+// argPropertyTypeRestrictionsOnCreate - ModelFields contribute to type constraints within Model.create arguments
 (() => {
     const { Book, Publisher, Person } = sessionFixture();
 
@@ -191,7 +190,7 @@ const sessionFixture = () => {
     Book.create({ title: 'B1', publisher: { index: 0 }, authors: [authorModel, true] }); // $ExpectError
 })();
 
-// argPropertyTypeRestrictionsOnUpsert - ModelFields contribute to type constraints within ModelType.create arguments
+// argPropertyTypeRestrictionsOnUpsert - ModelFields contribute to type constraints within Model.create arguments
 (() => {
     const { Book, Publisher, Person } = sessionFixture();
 
@@ -251,7 +250,7 @@ const sessionFixture = () => {
 (() => {
     const { Book, Person, Publisher } = sessionFixture();
 
-    // $ExpectType { Book: ModelType<Book>; Person: ModelType<Person>; Publisher: ModelType<Publisher>; }
+    // $ExpectType { Book: typeof Book; Person: typeof Person; Publisher: typeof Publisher; }
     const sessionBoundModels = { Book, Person, Publisher };
     return { ...sessionBoundModels };
 })();
