@@ -1,32 +1,6 @@
-import { Database, DatabaseCreator, TableState } from './db';
+import createDatabase, { Table, Database } from './db';
 import { AnyModel } from './Model';
 import Session, { OrmSession } from './Session';
-
-/**
- * A `{typeof Model[modelName]: typeof Model}` map defining:
- *
- * - database schema
- * - {@link Session} bound Model classes
- * - ORM branch state type
- */
-export type IndexedModelClasses<
-    T extends { [k in keyof T]: typeof AnyModel } = {},
-    K extends keyof T = Extract<keyof T, T[keyof T]['modelName']>
-> = { [k in K]: T[K] };
-
-/**
- * A mapped type capable of inferring ORM branch state type based on schema {@link Model}s.
- */
-export type OrmState<MClassMap extends IndexedModelClasses<any>> = { [K in keyof MClassMap]: TableState<MClassMap[K]> };
-
-/**
- * ORM instantiation opts.
- *
- * Enables customization of database creation.
- */
-export interface ORMOpts {
-    createDatabase: DatabaseCreator;
-}
 
 /**
  * ORM - the Object Relational Mapper.
@@ -41,11 +15,11 @@ export interface ORMOpts {
  * Internally, this class handles generating a schema specification from models
  * to the database.
  */
-export class ORM<I extends IndexedModelClasses<any>, ModelNames extends keyof I = keyof I> {
+export class ORM<I extends ORM.IndexedModelClasses<any>, ModelNames extends keyof I = keyof I> {
     /**
      * Creates a new ORM instance.
      */
-    constructor(opts?: ORMOpts);
+    constructor(opts?: ORM.ORMOpts);
 
     /**
      * Registers a {@link Model} class to the ORM.
@@ -76,7 +50,7 @@ export class ORM<I extends IndexedModelClasses<any>, ModelNames extends keyof I 
      *
      * @return empty state
      */
-    getEmptyState(): OrmState<I>;
+    getEmptyState(): ORM.OrmState<I>;
 
     /**
      * Begins an immutable database session.
@@ -88,7 +62,7 @@ export class ORM<I extends IndexedModelClasses<any>, ModelNames extends keyof I 
      *
      * @return a new {@link Session} instance
      */
-    session(state?: OrmState<I>): OrmSession<I>;
+    session(state?: ORM.OrmState<I>): OrmSession<I>;
 
     /**
      * Begins an mutable database session.
@@ -100,16 +74,46 @@ export class ORM<I extends IndexedModelClasses<any>, ModelNames extends keyof I 
      *
      * @return a new {@link Session} instance
      */
-    mutableSession(state: OrmState<I>): OrmSession<I>;
+    mutableSession(state: ORM.OrmState<I>): OrmSession<I>;
 
     /**
      * Acquire database reference.
      *
-     * If no database exists, an instance is created using either default or supplied implementation of {@link DatabaseCreator}.
+     * If no database exists, an instance is created using either default or supplied implementation of {@link createDatabase}.
      *
      * @return A {@link Database} instance structured according to registered schema.
      */
     getDatabase(): Database<I>;
+}
+
+export namespace ORM {
+    /**
+     * A `{typeof Model[modelName]: typeof Model}` map defining:
+     *
+     * - database schema
+     * - {@link Session} bound Model classes
+     * - ORM branch state type
+     */
+    type IndexedModelClasses<
+        T extends { [k in keyof T]: typeof AnyModel } = {},
+        K extends keyof T = Extract<keyof T, T[keyof T]['modelName']>
+    > = { [k in K]: T[K] };
+
+    /**
+     * A mapped type capable of inferring ORM branch state type based on schema {@link Model}s.
+     */
+    type OrmState<MClassMap extends IndexedModelClasses<any>> = {
+        [K in keyof MClassMap]: Table.TableState<MClassMap[K]>
+    };
+
+    /**
+     * ORM instantiation opts.
+     *
+     * Enables customization of database creation.
+     */
+     interface ORMOpts {
+        createDatabase: typeof createDatabase;
+    }
 }
 
 export default ORM;

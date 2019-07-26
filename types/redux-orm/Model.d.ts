@@ -1,9 +1,8 @@
-import { TableOpts } from './db';
-import { IdAttribute } from './db/Table';
 import { Attribute, AttributeWithDefault, FieldSpecMap, ForeignKey, OneToOne } from './fields';
 import { KnownKeys, OptionalKeys, PickByValue } from './helpers';
 import QuerySet, { MutableQuerySet } from './QuerySet';
 import { OrmSession } from './Session';
+import { Table } from './db';
 
 /**
  * A primitive value
@@ -92,7 +91,7 @@ export class Model<MClass extends typeof AnyModel = typeof AnyModel, Fields exte
      * @return the options object passed to the database for the table
      *                  representing this Model class.
      */
-    static options: { (): TableOpts } | TableOpts;
+    static options: (() => Table.TableOpts) | Table.TableOpts;
 
     /**
      * The key of Model's identifier property
@@ -140,7 +139,7 @@ export class Model<MClass extends typeof AnyModel = typeof AnyModel, Fields exte
      * Gets the id value of the current instance by looking up the id attribute.
      * @return The id value of the current instance.
      */
-    getId<Id extends Fields[IdAttribute<MClass>] = Fields[IdAttribute<MClass>]>(): Id extends undefined ? number : Id;
+    getId<Id extends Fields[Table.IdAttribute<MClass>] = Fields[Table.IdAttribute<MClass>]>(): Id extends undefined ? number : Id;
 
     /**
      * @return A string representation of this {@link Model} instance.
@@ -379,7 +378,7 @@ export type CustomInstanceProps<M extends AnyModel, Props extends object> = Omit
  *
  * Falls back to `'id'` if not specified explicitly via {@link Model.options}.
  */
-export type IdKey<M extends AnyModel> = IdAttribute<M['__class']> extends infer R
+export type IdKey<M extends AnyModel> = Table.IdAttribute<M['__class']> extends infer R
     ? R extends keyof ModelFields<M>
         ? R
         : never

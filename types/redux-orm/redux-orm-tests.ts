@@ -8,7 +8,6 @@ import {
     Model,
     MutableQuerySet,
     ORM,
-    OrmState,
     QuerySet,
     Ref
 } from 'redux-orm';
@@ -294,7 +293,7 @@ const sessionFixture = () => {
 (() => {
     const orm = ormFixture();
 
-    type StateType = OrmState<Schema>;
+    type StateType = ORM.OrmState<Schema>;
 
     return (state: StateType, action: CreateBookAction): StateType => {
         const session = orm.session(state);
@@ -342,7 +341,7 @@ const sessionFixture = () => {
 // selectors
 (() => {
     // test fixture, use reselect.createSelector in production code
-    const createSelector = <S, OS extends OrmState<any>, Result extends any>(
+    const createSelector = <S, OS extends ORM.OrmState<any>, Result extends any>(
         param1Creator: (state: S) => OS,
         combiner: (param1: OS) => Result
     ): ((state: S) => Result) => state => combiner(param1Creator(state));
@@ -352,15 +351,15 @@ const sessionFixture = () => {
     const ormSelector = createOrmSelector(orm, session => session.Book.all().toRefArray()[0]);
 
     interface RootState {
-        db: OrmState<Schema>;
+        db: ORM.OrmState<Schema>;
     }
 
-    const selector = createSelector<RootState, OrmState<Schema>, Ref<Book>>(
+    const selector = createSelector<RootState, ORM.OrmState<Schema>, Ref<Book>>(
         ({ db }) => db,
         ormSelector
     );
 
-    createSelector<RootState, OrmState<Schema>, Ref<Person>>(
+    createSelector<RootState, ORM.OrmState<Schema>, Ref<Person>>(
         ({ db }) => db,
         ormSelector // $ExpectError
     );
@@ -375,7 +374,7 @@ const sessionFixture = () => {
     interface RootState {
         foo: number;
         bar: string;
-        db: OrmState<Schema>;
+        db: ORM.OrmState<Schema>;
     }
 
     type TestSelector = (state: RootState) => Ref<Book>;

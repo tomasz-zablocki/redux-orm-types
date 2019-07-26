@@ -5,7 +5,7 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 3.5
 
-import { ORM, ORMOpts, OrmState } from './ORM';
+import { ORM } from './ORM';
 import Model, {
     CreateProps,
     CustomInstanceProps,
@@ -22,13 +22,12 @@ import Model, {
 } from './Model';
 import QuerySet, { MutableQuerySet } from './QuerySet';
 import { OrmSession } from './Session';
-import { createDatabase, TableOpts, TableState } from './db';
+import { createDatabase } from './db';
 import { attr, Attribute, FieldSpecMap, fk, ForeignKey, many, ManyToMany, OneToOne, oneToOne } from './fields';
 import { createReducer, createSelector, defaultUpdater, ORMReducer, ORMSelector } from './redux';
 
 export {
     FieldSpecMap,
-    TableOpts,
     RefPropOrSimple,
     ModelFieldMap,
     CustomInstanceProps,
@@ -50,9 +49,6 @@ export {
     IdKey,
     IdType,
     ORM,
-    OrmState,
-    ORMOpts,
-    TableState,
     Model,
     QuerySet,
     Attribute,

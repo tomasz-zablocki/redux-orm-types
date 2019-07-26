@@ -1,4 +1,4 @@
-import { QueryClause } from './db';
+import { Database } from './db';
 import Model, { AnyModel, IdType, ModelClass, Serializable, SessionBoundModel, UpdateProps } from './Model';
 
 /**
@@ -39,7 +39,7 @@ export class QuerySet<M extends AnyModel = any, InstanceProps extends object = {
      * @param  clauses - query clauses needed to evaluate the set.
      * @param  [opts] - additional options
      */
-    constructor(modelClass: ModelClass<M>, clauses: QueryClause[], opts?: object);
+    constructor(modelClass: ModelClass<M>, clauses: Database.QueryClause[], opts?: object);
 
     /**
      * Checks if the {@link QuerySet} instance has any records matching the query
