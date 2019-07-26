@@ -76,6 +76,7 @@ class Person extends Model<typeof Person, PersonFields> {
 }
 
 interface AuthorshipFields {
+    id: number;
     year?: number;
     book: Book;
     author: Person;
@@ -93,7 +94,7 @@ class Authorship extends Model<typeof Authorship, AuthorshipFields> {
 interface PublisherFields {
     index: number;
     name: string;
-    books?: QuerySet<Book>;
+    books: QuerySet<Book>;
 }
 
 class Publisher extends Model<typeof Publisher, PublisherFields> {
@@ -498,4 +499,9 @@ const sessionFixture = () => {
     Book.create({ title: 'foo', publisher: author }); // $ExpectError
     Book.create({ title: 'foo', publisher: 'error' }); // $ExpectError
     Book.create({ title: 'foo', publisher, coverArt: 'bar', authors: [3, author] }); // $ExpectError
+})();
+
+// redux-orm-types#17
+(() => {
+    const invalidRefField = sessionFixture().Book.withId('foo')!.ref.authors; // $ExpectError
 })();

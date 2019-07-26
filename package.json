@@ -42,6 +42,8 @@
     "clean": "rimraf ./*.d.ts ./db",
     "build": "cpy **/*.d.ts ../.. --cwd=types/redux-orm --parents",
     "prepare": "npm run build",
-    "test": "dtslint types redux-orm"
+    "test": "dtslint types redux-orm",
+    "diag": "cd types/redux-orm/ && tsc --extendedDiagnostics -p tsconfig.diag.json && cd ../..",
+    "diag-test": "cd types/redux-orm/ && tsc --extendedDiagnostics  && cd ../.."
   }
 }
