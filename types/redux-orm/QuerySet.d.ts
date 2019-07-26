@@ -1,5 +1,5 @@
 import { QueryClause } from './db';
-import Model, { AnyModel, IdType, ModelClass, Ref, Serializable, SessionBoundModel, UpdateProps } from './Model';
+import Model, { AnyModel, IdType, ModelClass, Serializable, SessionBoundModel, UpdateProps } from './Model';
 
 /**
  * <p>
@@ -55,7 +55,7 @@ export class QuerySet<M extends AnyModel = any, InstanceProps extends object = {
      *
      * @return references to the plain JS objects represented by the QuerySet
      */
-    toRefArray(): ReadonlyArray<Ref<M> & InstanceProps>;
+    toRefArray(): ReadonlyArray<M['ref'] & InstanceProps>;
 
     /**
      * Returns an array of {@link SessionBoundModel} instances represented by the QuerySet.
@@ -247,21 +247,21 @@ export namespace QuerySet {
      *
      * {@see QuerySet.orderBy}
      */
-    type SortIteratee<M extends Model> = keyof Ref<M> | { (row: Ref<M>): any };
+    type SortIteratee<M extends Model> = keyof M['ref'] | { (row: M['ref']): any };
 
     /**
      * Lookup clause as an object specifying props to match with plain object Model representation stored in the database.
      * {@see QuerySet.exclude}
      * {@see QuerySet.filter}
      */
-    type LookupProps<M extends Model> = Partial<Ref<M>> & Record<string, Serializable>;
+    type LookupProps<M extends Model> = Partial<M['ref']> & Record<string, Serializable>;
 
     /**
      * Lookup clause as predicate accepting plain object Model representation stored in the database.
      * {@see QuerySet.exclude}
      * {@see QuerySet.filter}
      */
-    type LookupPredicate<M extends Model> = (row: Ref<M>) => boolean;
+    type LookupPredicate<M extends Model> = (row: M['ref']) => boolean;
 
     /**
      * A union of lookup clauses.

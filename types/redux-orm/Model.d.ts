@@ -116,6 +116,9 @@ export class Model<MClass extends typeof AnyModel = typeof AnyModel, Fields exte
      * @return a reference to the plain JS object in the store
      */
     readonly ref: Ref<this>;
+    __fields: Fields;
+    __descriptors: MClass['fields'];
+    __class: MClass;
 
     /**
      * Creates a Model instance from it's properties.
@@ -376,20 +379,18 @@ export type CustomInstanceProps<M extends AnyModel, Props extends object> = Omit
  *
  * Falls back to `'id'` if not specified explicitly via {@link Model.options}.
  */
-export type IdKey<M extends AnyModel> = IdAttribute<ModelClass<M>>;
+export type IdKey<M extends AnyModel> = IdAttribute<M['__class']> extends infer R
+    ? R extends keyof ModelFields<M>
+        ? R
+        : never
+    : never;
 
 /**
  * Model id property type extraction helper.
  *
  * Falls back to `number` if not specified explicitly via {@link Model.options}.
  */
-export type IdType<M extends Model> = IdKey<M> extends infer U
-    ? U extends keyof ModelFields<M>
-        ? FieldAt<M, U> extends string | number
-            ? FieldAt<M, U>
-            : never
-        : number
-    : number;
+export type IdType<M extends Model> = FieldAt<M, IdKey<M>> extends string ? string : number;
 
 /**
  * A mapped type restricting allowed types of second {@link Model.set} argument.
@@ -397,7 +398,9 @@ export type IdType<M extends Model> = IdKey<M> extends infer U
  * - declared Model field type - if propertyName belongs to declared Model fields
  * - any serializable value - if propertyName is not among declared Model fields
  */
-export type RefPropOrSimple<M extends AnyModel, K extends string> = K extends keyof Ref<M> ? Ref<M>[K] : Serializable;
+export type RefPropOrSimple<M extends AnyModel, K extends string> = K extends keyof M['ref']
+    ? M['ref'][K]
+    : Serializable;
 
 /**
  * A Model-derived mapped type, representing model instance bound to a session.
@@ -418,11 +421,7 @@ export type ModelClass<M extends AnyModel> = ReturnType<M['getClass']>;
 /**
  * @internal
  */
-export type ModelFields<M extends Model> = ConstructorParameters<ModelClass<M>> extends [infer U]
-    ? U extends ModelFieldMap
-        ? U
-        : never
-    : never;
+export type ModelFields<M extends AnyModel> = M['__fields'];
 
 export type FieldAt<M extends Model, K extends keyof ModelFields<M>> = ModelFields<M>[K];
 
@@ -431,16 +430,23 @@ export type FieldAt<M extends Model, K extends keyof ModelFields<M>> = ModelFiel
  */
 export type FieldSpecKeys<M extends AnyModel, TField> = Extract<
     keyof ModelFields<M>,
-    keyof PickByValue<ModelClass<M>['fields'], TField>
+    keyof PickByValue<M['__descriptors'], TField>
 >;
 
 /**
  * Type of {@link Model.ref} / database entry for a particular Model type
  */
+// export type Ref<M extends AnyModel> = {
+//     [K in FieldSpecKeys<M, Attribute | ForeignKey | OneToOne>]: FieldAt<M, K> extends AnyModel
+//         ? IdType<FieldAt<M, K>>
+//         : FieldAt<M, K>;
+// };
 export type Ref<M extends AnyModel> = {
-    [K in FieldSpecKeys<M, Attribute | ForeignKey | OneToOne>]: FieldAt<M, K> extends AnyModel
-        ? IdType<FieldAt<M, K>>
-        : FieldAt<M, K>;
+    [K in keyof PickByValue<M['__descriptors'], Attribute | ForeignKey | OneToOne>]: K extends keyof M['__fields']
+        ? M['__fields'][K] extends AnyModel
+            ? IdType<M['__fields'][K]>
+            : M['__fields'][K]
+        : never;
 };
 
 export type ModelBlueprint<M extends AnyModel, Fields extends ModelFields<M> = ModelFields<M>> = {
