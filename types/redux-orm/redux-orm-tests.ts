@@ -1,16 +1,4 @@
-import {
-    attr,
-    createSelector as createOrmSelector,
-    fk,
-    IdKey,
-    IdType,
-    many,
-    Model,
-    MutableQuerySet,
-    ORM,
-    QuerySet,
-    Ref
-} from 'redux-orm';
+import { createSelector as createOrmSelector, attr, fk, many, Model, MutableQuerySet, ORM, QuerySet } from 'redux-orm';
 
 interface CreateBookAction {
     type: 'CREATE_BOOK';
@@ -24,14 +12,14 @@ interface DeleteBookAction {
 
 type RootAction = CreateBookAction | DeleteBookAction;
 
-interface BookFields {
+interface Book {
     title: string;
     coverArt: string;
     publisher: Publisher;
     authors: MutableQuerySet<Person>;
 }
 
-class Book extends Model<typeof Book, BookFields> {
+class Book extends Model<typeof Book> {
     static modelName = 'Book' as const;
     static fields = {
         title: attr(),
@@ -48,7 +36,7 @@ class Book extends Model<typeof Book, BookFields> {
                 book.create(action.payload);
                 break;
             case 'DELETE_BOOK':
-                book.filter(book => book.title === action.payload.title).delete();
+                book.withId(action.payload.title)!.delete();
                 break;
             default:
                 break;
@@ -56,7 +44,7 @@ class Book extends Model<typeof Book, BookFields> {
     }
 }
 
-interface PersonFields {
+interface Person {
     id: string;
     firstName: string;
     lastName: string;
@@ -64,7 +52,7 @@ interface PersonFields {
     books: MutableQuerySet<Book>;
 }
 
-class Person extends Model<typeof Person, PersonFields> {
+class Person extends Model<typeof Person> {
     static modelName = 'Person' as const;
     static fields = {
         id: attr(),
@@ -74,14 +62,14 @@ class Person extends Model<typeof Person, PersonFields> {
     };
 }
 
-interface AuthorshipFields {
+interface Authorship {
     id: number;
     year?: number;
     book: Book;
     author: Person;
 }
 
-class Authorship extends Model<typeof Authorship, AuthorshipFields> {
+class Authorship extends Model<typeof Authorship> {
     static modelName = 'Authorship' as const;
     static fields = {
         year: attr(),
@@ -90,13 +78,13 @@ class Authorship extends Model<typeof Authorship, AuthorshipFields> {
     };
 }
 
-interface PublisherFields {
+interface Publisher {
     index: number;
     name: string;
     books: QuerySet<Book>;
 }
 
-class Publisher extends Model<typeof Publisher, PublisherFields> {
+class Publisher extends Model<typeof Publisher> {
     static modelName = 'Publisher' as const;
     static fields = {
         index: attr(),
@@ -107,9 +95,7 @@ class Publisher extends Model<typeof Publisher, PublisherFields> {
     };
 }
 
-const schema = { Book, Authorship, Person, Publisher };
-
-type Schema = typeof schema;
+type Schema = [typeof Book, typeof Authorship, typeof Person, typeof Publisher];
 
 // create ORM instance and register { Book, Publisher, Person, Authorship } schema
 const ormFixture = () => {
@@ -197,7 +183,7 @@ const sessionFixture = () => {
     /** Upsert requires id to be provided */
     Book.upsert({ publisher: 1 }); // $ExpectError
 
-    // $ExpectType SessionBoundModel<Book, Pick<{ title: string; publisher: number; }, never>>
+    // $ExpectType Book & Pick<{ title: string; publisher: number; }, never>
     Book.upsert({ title: 'B1', publisher: 1 });
 
     /* Incompatible property types: */
@@ -231,8 +217,7 @@ const sessionFixture = () => {
 
 // restriction of allowed ORM.register args
 (() => {
-    const incompleteSchema = { Book, Authorship, Person };
-    const orm = new ORM<typeof incompleteSchema>();
+    const orm = new ORM<[typeof Book, typeof Authorship, typeof Person]>();
     orm.register(Book, Authorship, Person, Publisher); // $ExpectError
 })();
 
@@ -257,9 +242,8 @@ const sessionFixture = () => {
 
 // IdKey and IdType mapped types support for valid identifier configurations
 (() => {
-    type ExtractId<M extends Model> = [IdKey<M>, IdType<M>];
+    type ExtractId<M extends Model> = [Model.IdKey<M>, Model.IdType<M>];
 
-    type ImplicitDefault = ExtractId<Authorship>; // $ExpectType ["id", number]
     type CustomKey = ExtractId<Publisher>; // $ExpectType ["index", number]
     type CustomType = ExtractId<Person>; // $ExpectType ["id", string]
     type CustomKeyAndType = ExtractId<Book>; // $ExpectType ["title", string]
@@ -293,7 +277,7 @@ const sessionFixture = () => {
 (() => {
     const orm = ormFixture();
 
-    type StateType = ORM.OrmState<Schema>;
+    type StateType = ORM.State<Schema>;
 
     return (state: StateType, action: CreateBookAction): StateType => {
         const session = orm.session(state);
@@ -341,7 +325,7 @@ const sessionFixture = () => {
 // selectors
 (() => {
     // test fixture, use reselect.createSelector in production code
-    const createSelector = <S, OS extends ORM.OrmState<any>, Result extends any>(
+    const createSelector = <S, OS extends ORM.State<any>, Result extends any>(
         param1Creator: (state: S) => OS,
         combiner: (param1: OS) => Result
     ): ((state: S) => Result) => state => combiner(param1Creator(state));
@@ -351,20 +335,20 @@ const sessionFixture = () => {
     const ormSelector = createOrmSelector(orm, session => session.Book.all().toRefArray()[0]);
 
     interface RootState {
-        db: ORM.OrmState<Schema>;
+        db: ORM.State<Schema>;
     }
 
-    const selector = createSelector<RootState, ORM.OrmState<Schema>, Ref<Book>>(
+    const selector = createSelector<RootState, ORM.State<Schema>, Model.Ref<Book>>(
         ({ db }) => db,
         ormSelector
     );
 
-    createSelector<RootState, ORM.OrmState<Schema>, Ref<Person>>(
+    selector({ db: orm.getEmptyState() }); // $ExpectType Ref<Book>
+
+    return createSelector<RootState, ORM.State<Schema>, Model.Ref<Person>>(
         ({ db }) => db,
         ormSelector // $ExpectError
     );
-
-    selector({ db: orm.getEmptyState() }); // $ExpectType Ref<Book>
 })();
 
 // advanced selectors
@@ -374,10 +358,10 @@ const sessionFixture = () => {
     interface RootState {
         foo: number;
         bar: string;
-        db: ORM.OrmState<Schema>;
+        db: ORM.State<Schema>;
     }
 
-    type TestSelector = (state: RootState) => Ref<Book>;
+    type TestSelector = (state: RootState) => Model.Ref<Book>;
 
     const selector0 = createOrmSelector(orm, s => s.db, session => session.Book.first()!.ref) as TestSelector;
 

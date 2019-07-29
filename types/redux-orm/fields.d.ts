@@ -45,34 +45,14 @@ export class ManyToMany extends RelationalField {
     ['type']: 'many';
 }
 
-export interface AttrCreator {
-    (): Attribute;
-    (opts: AttributeOpts): AttributeWithDefault;
-}
+export function attr(opts: AttributeOpts): AttributeWithDefault;
+export function attr(): Attribute;
 
-export interface FkCreator {
-    (toModelName: string, relatedName?: string): ForeignKey;
-    (opts: RelationalFieldOpts): ForeignKey;
-}
+export function fk(toModelName: string, relatedName?: string): ForeignKey;
+export function fk(opts: RelationalFieldOpts): ForeignKey;
 
-export interface ManyCreator {
-    (toModelName: string, relatedName?: string): ManyToMany;
-    (opts: RelationalFieldOpts): ManyToMany;
-}
+export function many(toModelName: string, relatedName?: string): ManyToMany;
+export function many(opts: RelationalFieldOpts): ManyToMany;
 
-export interface OneToOneCreator {
-    (toModelName: string, relatedName?: string): OneToOne;
-    (opts: RelationalFieldOpts): OneToOne;
-}
-
-export const attr: AttrCreator;
-
-export const oneToOne: OneToOneCreator;
-
-export const fk: FkCreator;
-
-export const many: ManyCreator;
-
-export interface FieldSpecMap {
-    [K: string]: Attribute | ForeignKey | ManyToMany | OneToOne;
-}
+export function oneToOne(toModelName: string, relatedName?: string): OneToOne;
+export function oneToOne(opts: RelationalFieldOpts): OneToOne;

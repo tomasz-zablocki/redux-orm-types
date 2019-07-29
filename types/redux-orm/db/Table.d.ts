@@ -1,11 +1,11 @@
-import Model, { AnyModel, FieldSpecKeys, IdType, Ref } from '../Model';
+import Model from '../Model';
 import { ForeignKey, OneToOne } from '../index';
 import { Field } from '../fields';
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
  */
-export class Table<MClass extends typeof AnyModel> {
+export class Table<MClass extends Model.Class> {
     /**
      * Creates a new {@link Table} instance.
      *
@@ -18,7 +18,7 @@ export class Table<MClass extends typeof AnyModel> {
      *                                                 map.
      * @param   [userOpts.fields=DefaultTableOpts.fields] - mapping of field key to {@link Field} object
      */
-    constructor(userOpts?: Table.ModelTableOpts<MClass>);
+    constructor(userOpts?: Table.TableOpts<MClass>);
 
     getEmptyState(): Table.TableState<MClass>;
 }
@@ -31,8 +31,8 @@ export namespace Table {
         maxId: MIdType extends number ? number : null | number;
     }
 
-    type TableIndexes<MClass extends typeof AnyModel> = {
-        [K in FieldSpecKeys<InstanceType<MClass>, OneToOne | ForeignKey>]: string;
+    type TableIndexes<MClass extends Model.Class> = {
+        [K in Model.FieldDescriptorKeys<InstanceType<MClass>, OneToOne | ForeignKey>]: string;
     };
 
     /**
@@ -40,89 +40,64 @@ export namespace Table {
      *
      * Infers actual state of the ORM branch based on the {@link Model} class provided.
      */
-    type TableState<MClass extends typeof AnyModel> = {
-        readonly meta: DefaultMeta<IdType<InstanceType<MClass>>>;
+    type TableState<MClass extends Model.Class> = {
+        readonly meta: DefaultMeta<Model.IdType<InstanceType<MClass>>>;
         readonly indexes: TableIndexes<MClass>;
-    } & { readonly [K in ArrName<MClass>]: ReadonlyArray<IdType<InstanceType<MClass>>> } &
+    } & { readonly [K in ArrName<MClass>]: ReadonlyArray<Model.IdType<InstanceType<MClass>>> } &
         {
             readonly [K in MapName<MClass>]: {
-                readonly [K: string]: Ref<InstanceType<MClass>>;
+                readonly [K: string]: Model.Ref<InstanceType<MClass>>;
             };
         };
-
-    /**
-     * @internal
-     */
-    type ExtractModelOption<
-        MClass extends typeof AnyModel,
-        K extends keyof TableOpts,
-        DefaultValue extends string
-    > = MClass['options'] extends () => { [P in K]: infer R }
-        ? R extends string
-            ? R
-            : DefaultValue
-        : MClass['options'] extends { [P in K]: infer R }
-        ? R extends string
-            ? R
-            : DefaultValue
-        : DefaultValue;
 
     /**
      * Model idAttribute option extraction helper.
      *
      * Falls back to `'id'` if not specified explicitly via {@link Model.options}.
      */
-    type IdAttribute<MClass extends typeof AnyModel> = ExtractModelOption<MClass, 'idAttribute', 'id'>;
+    type IdAttribute<MClass extends Model.Class> = MClass['options'] extends () => { idAttribute: infer R }
+        ? R
+        : MClass['options'] extends { idAttribute: infer R }
+        ? R
+        : 'id';
 
     /**
      * Model arrName option extraction helper.
      *
      * Falls back to `'items'` if not specified explicitly via {@link Model.options}.
      */
-    type ArrName<MClass extends typeof AnyModel> = ExtractModelOption<MClass, 'arrName', 'items'>;
+    type ArrName<MClass extends Model.Class> = (MClass['options'] extends () => { arrName: infer R }
+        ? R
+        : MClass['options'] extends { arrName: infer R }
+        ? R
+        : 'items') extends infer U
+        ? U extends string
+            ? U
+            : never
+        : never;
 
     /**
      * Model mapName option extraction helper.
      *
      * Falls back to `'itemsById'` if not specified explicitly via {@link Model.options}.
      */
-    type MapName<MClass extends typeof AnyModel> = ExtractModelOption<MClass, 'mapName', 'itemsById'>;
+    type MapName<MClass extends Model.Class> = (MClass['options'] extends () => { mapName: infer R }
+        ? R
+        : MClass['options'] extends { mapName: infer R }
+        ? R
+        : 'itemsById') extends infer U
+        ? U extends string
+            ? U
+            : never
+        : never;
 
     /**
-     * Unbox {@link Model#options} or fallback to default for others.
-     *
      * @internal
      */
-    interface ModelTableOpts<MClass extends typeof AnyModel> {
+    interface TableOpts<MClass extends Model.Class> {
         readonly idAttribute: IdAttribute<MClass>;
         readonly arrName: ArrName<MClass>;
         readonly mapName: MapName<MClass>;
         readonly fields: MClass['fields'];
-    }
-
-    /**
-     * {@link TableOpts} used for {@link Table} customization.
-     *
-     * Supplied via {@link Model#options}.
-     *
-     * If no customizations were provided, the table uses following default options:
-     * <br/>
-     * ```typescript
-     *  {
-     *      idAttribute: 'id',
-     *      arrName:     'items',
-     *      mapName:     'itemsById'
-     *  }
-     * ```
-     * <br/>
-     *  @see {@link Model}
-     *  @see {@link Model#options}
-     *  @see {@link OrmState}
-     */
-    interface TableOpts {
-        readonly idAttribute?: string;
-        readonly arrName?: string;
-        readonly mapName?: string;
-        readonly fields?: { [K: string]: Field };
     }
 }
