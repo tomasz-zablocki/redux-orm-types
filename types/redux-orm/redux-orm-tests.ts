@@ -488,3 +488,6 @@ const sessionFixture = () => {
 (() => {
     const invalidRefField = sessionFixture().Book.withId('foo')!.ref.authors; // $ExpectError
 })();
+
+// redux-orm-types#18
+(() => many({ to: 'Bar', relatedName: 'foos', through: 'FooBar', throughFields: ['foo', 'bar'] }))();

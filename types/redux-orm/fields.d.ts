@@ -19,10 +19,7 @@ export interface RelationalFieldOpts {
     to: string;
     relatedName?: string;
     through?: string;
-    throughFields?: {
-        to: string;
-        from: string;
-    };
+    throughFields?: [string, string];
     as?: string;
 }
 
