@@ -1,4 +1,4 @@
-import { createSelector as createOrmSelector, attr, fk, many, Model, MutableQuerySet, ORM, QuerySet } from 'redux-orm';
+import { attr, createSelector as createOrmSelector, fk, many, Model, MutableQuerySet, ORM, QuerySet } from 'redux-orm';
 
 interface CreateBookAction {
     type: 'CREATE_BOOK';
@@ -242,7 +242,7 @@ const sessionFixture = () => {
 
 // IdKey and IdType mapped types support for valid identifier configurations
 (() => {
-    type ExtractId<M extends Model> = [Model.IdKey<M>, Model.IdType<M>];
+    type ExtractId<M extends Model> = [Model.IdKey<M>, Model.IdType<M>] extends [infer R, infer U] ? [R, U] : never;
 
     type CustomKey = ExtractId<Publisher>; // $ExpectType ["index", number]
     type CustomType = ExtractId<Person>; // $ExpectType ["id", string]
@@ -491,3 +491,8 @@ const sessionFixture = () => {
 
 // redux-orm-types#18
 (() => many({ to: 'Bar', relatedName: 'foos', through: 'FooBar', throughFields: ['foo', 'bar'] }))();
+
+// passing ORM stateSelector
+(() => {
+    new ORM<[typeof Book]>({ stateSelector: (state: { db: ORM.State<[typeof Book]> }) => state.db });
+})();

@@ -1,6 +1,6 @@
-import createDatabase, { Table, Database } from './db';
+import createDatabase, { Database, Table } from './db';
 import Model from './Model';
-import Session, { OrmSession } from './Session';
+import { OrmSession } from './Session';
 
 /**
  * ORM - the Object Relational Mapper.
@@ -18,8 +18,15 @@ import Session, { OrmSession } from './Session';
 export class ORM<S extends ORM.Schema, ORegistry extends ORM.Registry<S> = ORM.Registry<S>> {
     /**
      * Creates a new ORM instance.
+     *
+     * @param [opts]
+     * @param [opts.stateSelector] - function that given a Redux state tree
+     *                                          will return the ORM state's subtree,
+     *                                          e.g. `state => state.orm`
+     *                                          (necessary if you want to use selectors)
+     * @param [opts.createDatabase] - function that creates a database
      */
-    constructor(opts?: ORM.ORMOpts);
+    constructor(opts?: ORM.ORMOpts<S>);
 
     /**
      * Registers a {@link Model} class to the ORM.
@@ -87,9 +94,10 @@ export class ORM<S extends ORM.Schema, ORegistry extends ORM.Registry<S> = ORM.R
 }
 
 export namespace ORM {
-    /** ORM instantiation opts - enables customization of database creation. */
-    interface ORMOpts {
-        createDatabase: typeof createDatabase;
+    /** ORM instantiation opts - enables customization of database creation and state selector definition. */
+    interface ORMOpts<S extends Schema> {
+        createDatabase?: typeof createDatabase;
+        stateSelector?: (state: any) => State<S>;
     }
 
     /** Schema definition - an array of {@link Model.Class} constructor functions */
